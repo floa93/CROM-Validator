@@ -1,0 +1,17 @@
+grammar org.rosi.crom.validation.mapping.FeatureMapping with org.eclipse.xtext.common.Terminals
+
+generate featureMapping "http://www.rosi.org/crom/validation/mapping/FeatureMapping"
+
+Model :
+    elements+=(Universal | Feature)*;
+  
+Universal:
+	'universal'
+    	elements+=(Invariant)+;
+
+Feature:
+    'feature' name=ID
+    	elements+=(Invariant)+;
+
+Invariant:
+	 'invariant' name=ID;

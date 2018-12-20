@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.0"?>
+<plugin>
+	<extension point="org.eclipse.emf.ecore.generated_package">
+		<package 
+			uri = "http://www.rosi.org/crom/validation/mapping/FeatureMapping"
+			class = "org.rosi.crom.validation.mapping.featureMapping.FeatureMappingPackage"
+			genModel = "model/generated/FeatureMapping.genmodel" />
+	</extension>
+</plugin>

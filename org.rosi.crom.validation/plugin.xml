@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.ui.popupMenus">
+      <objectContribution
+            id="org.rosi.crom.validation.contribution1"
+            nameFilter="*.crom"
+            objectClass="org.eclipse.core.resources.IFile">
+       <menu
+           label="Validation"
+           path="additions"
+           id="org.rosi.crom.validation.menu">
+        <separator
+              name="validate">
+        </separator>
+         </menu>
+         <action
+               class="org.rosi.crom.validation.popup.actions.ValidateCROMAction"
+               id="org.rosi.crom.validation.ValidateCROMAction"
+               label="Validation"
+               menubarPath="org.rosi.crom.validation.menu"
+               tooltip="Validates the CROM for Well-Formedness">
+         </action>
+      </objectContribution>
+   </extension>
+
+</plugin>

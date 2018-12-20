@@ -1,0 +1,405 @@
+import '/resource/org.rosi.crom.metamodel/model/crom_l1_composed.ecore'
+
+package crom_l1_composed
+
+context Model
+
+--Helper Methods
+def: 
+withError(valid : Boolean, message : String) : OclAny =
+if valid
+then true
+else message
+endif
+
+
+def: 
+--eContainer is not directly accessible
+--children.oclAsType(ecore::EObject).eContainer()
+ct_in_fil(f : Relation) : CompartmentType =
+(f.oclAsType(Fulfillment).filled).oclAsType(ecore::EObject).eContainer().eContainer().oclAsType(CompartmentType)
+
+
+def:
+--check if r is a RoleType or a RoleGroup and returns the CompartmentType, which contains r
+RoleTypeGetCT(r : AbstractRole) : CompartmentType =
+if r.oclAsType(ecore::EObject).eContainer().oclIsKindOf(RoleGroup)
+then 
+r.oclAsType(ecore::EObject).eContainer().eContainer().eContainer().oclAsType(CompartmentType)
+else
+r.oclAsType(ecore::EObject).eContainer().eContainer().oclAsType(CompartmentType)
+endif
+
+def:
+RelationshipConstraintGetCT(rel : RelationshipConstraint) : CompartmentType =
+rel.oclAsType(ecore::EObject).eContainer().oclAsType(CompartmentType)
+
+def:
+RelationshipGetCT(rel : Relationship) : CompartmentType =
+rel.oclAsType(ecore::EObject).eContainer().oclAsType(CompartmentType)
+
+
+-- Global Variables
+def: 
+nt : Set(ModelElement) = self.elements->select(e | e.oclIsKindOf(NaturalType))
+
+def: 
+ct : Set(CompartmentType) = CompartmentType.allInstances()
+
+def:
+rt : Set(RoleType) = RoleType.allInstances()
+
+def:
+t : Set(ModelElement) = self.nt->union(self.ct)
+
+def: 
+rst : Set(Relationship) = 
+ct->iterate(ct : CompartmentType; rsts : Set(Relationship) = Set{} | 
+	ct.relationships->iterate(rst : Relationship; none : Set(Relationship) = Set{} |
+		rsts->including(rst)
+	)
+)
+
+def: 
+fulfillments : Set(Relation) = self.relations->select(r | r.oclIsKindOf(Fulfillment))
+
+
+def: 
+-- Like Map((rst,ct),(rt1,rt2)) Type
+rel : 
+Set(
+	Tuple(
+		k : Tuple(rst : Relationship, ct : CompartmentType),
+		v : Tuple(rt1 : RoleType, rt2 : RoleType)
+	)
+) = 
+self.ct->iterate(ct : CompartmentType; rels : Set(Tuple(k : Tuple(rst : Relationship, ct : CompartmentType), v :Tuple(rt1 : RoleType, rt2 : RoleType))) = Set{} | 
+	ct.relationships->iterate(rst : Relationship; none : Set(Tuple(k : Tuple(rst : Relationship, ct : CompartmentType), v :Tuple(rt1 : RoleType, rt2 : RoleType))) = Set{} |
+		rels->including(
+			Tuple{
+				k=Tuple{rst=rst, ct=ct},
+				v=Tuple{rt1=rst.first.holder, rt2=rst.second.holder}
+			}
+		)
+	)
+)
+
+def: 
+fills : 
+Set(
+	Tuple(
+		k : Tuple(t : String, ct : String),
+		rt : String
+	)
+) =
+Fulfillment.allInstances()->iterate(fulfillment : Fulfillment; fills : Set(Tuple(k : Tuple(t : String, ct : String), rt : String)) = Set{} |  
+	fills->including(
+		Tuple{
+			k=Tuple{t=fulfillment.filler.name, ct=self.RoleTypeGetCT(fulfillment.filled).name},
+			rt=fulfillment.filled.oclAsType(RoleType).name
+		}
+	)
+)
+
+def:
+rolec : Set(RoleConstraint) = RoleConstraint.allInstances()
+
+def:
+rolec2 : 
+Set(
+	Tuple(
+		ct : CompartmentType,
+		v : Tuple(
+				card : Tuple(lower : ecore::EInt, upper : ecore::EInt),
+				rg : AbstractRole
+			)
+	)
+) = 
+ct->iterate(ct : CompartmentType; rolec2 : Set(Tuple(ct : CompartmentType, v : Tuple(card : Tuple(lower : ecore::EInt, upper : ecore::EInt), rg : AbstractRole))) = Set{} | 
+	ct.parts->iterate(part : Part; empty : Set(Tuple(ct : CompartmentType, v : Tuple(card : Tuple(lower : ecore::EInt, upper : ecore::EInt), rg : AbstractRole))) = Set{} | 
+		rolec2->including(
+			Tuple{
+				ct=ct,
+				v=Tuple{
+					card=Tuple{
+						lower=part.lower,
+						upper=part.upper
+					},
+					rg=part.role
+				}
+			}
+		)
+	)
+)
+
+def: 
+card : 
+Set(
+	Tuple(
+		k : Tuple(rst : String, ct : String),
+		v : Tuple(
+			first : Tuple(lower : ecore::EInt, upper : ecore::EInt),
+			second : Tuple(lower : ecore::EInt, upper : ecore::EInt)
+		)
+	)	
+) 
+=
+rst->iterate(rst : Relationship; card : Set(Tuple(k : Tuple(rst : String, ct : String), v : Tuple(first : Tuple(lower : ecore::EInt, upper : ecore::EInt), second : Tuple(lower : ecore::EInt, upper : ecore::EInt)))) = Set{} | 
+	card->including(
+		Tuple{
+			k=Tuple{
+				rst=rst.name,
+				ct=RelationshipGetCT(rst).name
+			},
+			v=Tuple{
+				first=Tuple{
+					lower=rst.first.lower,
+					upper=rst.first.upper
+				},
+				second=Tuple{
+					lower=rst.second.lower,
+					upper=rst.second.upper
+				}
+			}
+		}
+	)
+)
+
+
+
+def: 
+intra  : Set(
+	Tuple(
+		k : Tuple(rst : String, ct : String),
+		c : String
+	)
+) =
+IntraRelationshipConstraint.allInstances()->iterate(intraRel : IntraRelationshipConstraint; intra : Set(Tuple(k : Tuple(rst : String, ct : String), c : String)) = Set{} |  
+	intra->including(Tuple{
+		k=Tuple{rst=intraRel.relation.name, ct=self.RelationshipConstraintGetCT(intraRel).name},
+		c=intraRel.toString()
+	})
+)
+
+	
+def: 
+inter  : Set(String) =
+Set{}
+
+--Constraints
+
+inv u_test_axiom:
+self.card
+
+inv test:
+self.rt->select(
+		rt | self.fills->exists(
+			f| f.rt <> rt
+		)
+	)->iterate(rt : RoleType; missing : String = '' | 
+	missing.concat(rt.name).concat(' ')
+)
+	
+
+
+inv u_axiom_7_2:
+withError(
+	self.ct->forAll(
+		ct | self.fulfillments->exists(
+			f | self.ct_in_fil(f) = ct
+		)
+	),
+	'E.Failed for CompartmentType: '
+	+ self.ct->select(
+		ct | self.fulfillments->exists(
+			f | self.ct_in_fil(f) <> ct
+		)
+	)->asSequence()->first().name
+)
+
+inv u_axiom_7_3:
+withError(
+	 self.rst->forAll(
+	 	rst | self.ct->exists(
+	 		ct | self.rel->exists(
+	 			rel | rel.k = Tuple{rst=rst, ct=ct}
+	 		)
+	 	)
+	 ),
+	'Every Relationship needs to be defined in a CompartmentType. Failed for Relationship: ' 
+	+ self.rst->select(
+		rst | self.ct->exists(
+	 		ct | not self.rel->exists(
+	 			rel | rel.k = Tuple{rst=rst, ct=ct}
+	 		)
+	 	)
+	)->asSequence()->first().name
+)
+	 
+inv u_axiom_7_4:
+withError(
+	not self.rel->exists(
+		rel | rel.v.rt1.name = rel.v.rt2.name
+	),
+	'Relationships between the same RoleTypes are not allowed. Failed for Relationship: ' 
+	+ self.rel->select(
+		rel | rel.v.rt1.name = rel.v.rt2.name
+	)->asSequence()->first().k.rst.name
+)
+	
+inv u_axiom_7_5:
+withError(
+	not self.rel->exists(
+		rel | RoleTypeGetCT(rel.v.rt1) <> RoleTypeGetCT(rel.v.rt2)
+	),
+	'The RoleTypes of a Relationship need to be in the same CompartmentType. Failed for Relationship: ' 
+	+ self.rel->select(
+		rel | RoleTypeGetCT(rel.v.rt1) <> RoleTypeGetCT(rel.v.rt2)
+	)->asSequence()->first().k.rst.name
+)
+	
+inv u_axiom_7_21_1:
+withError(
+	self.rt->forAll(
+		rt | self.ct->exists(
+			ct | ct.parts.role->includes(rt)
+		)
+	),
+	'Every RoleType must be defined in a CompartmentType. Failed for RoleType: ' 
+	+ self.rt->select(
+		rt | not self.ct->exists(
+			ct | ct.parts.role->includes(rt)
+		)
+	)->asSequence()->first().name
+)
+
+inv u_axiom_7_21_2:
+withError(
+	self.rt->forAll(
+		rt | self.fills->exists(
+			f| f.rt = rt.name
+		)
+	),
+	'Every RoleType must be fulfilled. Failed for RoleType: ' 
+	+ self.rt->select(
+		rt | not self.fills->exists(
+			f| f.rt = rt.name
+		)
+	)->asSequence()->first().name
+)
+
+
+inv u_axiom_7_10_1:
+--Constraints need to be defined in CT, not outside.
+true
+
+inv u_axiom_7_10_2:
+--CT contains constraint’s RT's?
+self.ct->forAll(
+	ct | ct.constraints->forAll(
+		constraint |		
+		if constraint.oclIsKindOf(RoleConstraint)
+		then 
+			let role_constraint : RoleConstraint = constraint.oclAsType(RoleConstraint) in 
+			ct.parts->includes(role_constraint.first)
+			and
+			ct.parts->includes(role_constraint.second)
+		else true
+		endif
+	)
+)
+
+
+inv not_Role_Implication:
+withError(
+	not self.rolec->exists(
+		r | r.oclIsKindOf(RoleImplication)
+	),
+	'Role implications are not allowed.' 
+)
+
+inv not_Role_Prohibition:
+withError(
+	not self.rolec->exists(
+		r | r.oclIsKindOf(RoleProhibition)
+	),
+	'Role prohibitions are not allowed.' 
+)
+
+inv not_Role_Equivalence:
+withError(
+	not self.rolec->exists(
+		r | r.oclIsKindOf(RoleEquivalence)
+	),
+	'Role equivalences are not allowed.' 
+)
+
+inv not_Group_Constraints:
+withError(
+	self.ct->forAll(
+		ct | not ct.parts->exists(part | part.oclIsKindOf(RoleGroup))
+	),
+	'Role groups are not allowed.' 
+)
+
+inv not_Occurrence_Constraints:
+withError(
+	self.ct->forAll(
+		ct | not ct.parts->exists(
+			part | part.lower <> null or part.upper <> null
+		)
+	),
+	'Occurence constraints are not allowed.' 
+)
+
+inv Relationship_Cardinality:
+withError(
+	true,
+	'' 
+)
+
+inv not_Relationship_Cardinality:
+withError(
+	self.card->isEmpty(),
+	'Relationship cardinalities are not allowed.' 
+)
+
+inv Intra_Relationship_Constraints:
+withError(
+	true,
+	'' 
+)
+
+inv not_Intra_Relationship_Constraints:
+withError(
+	self.intra->isEmpty(),
+	'Intra relationship constraints are not allowed.' 
+)
+
+inv Parthood_Constraints:
+withError(
+	true,
+	'' 
+)
+
+inv not_Parthood_Constraints:
+withError(
+	true,
+	'' 
+)
+
+inv Inter_Relationship_Constraints:
+withError(
+	true,
+	'' 
+)
+
+inv not_Inter_Relationship_Constraints:
+withError(
+	self.inter->isEmpty(),
+	'Inter relationship constraints are not allowed.' 
+)
+
+endpackage
+
+

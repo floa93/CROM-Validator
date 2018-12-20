@@ -1,0 +1,58 @@
+universal
+	invariant CompartmentContainsRoles
+	invariant CompartmentContainsFilledRoles
+	invariant RelationshipDefinedInCompartment	
+	invariant RelationshipRolesAreDistinct	
+	invariant RelationshipRolesInSameCompartment
+	invariant RoleFilled	
+	invariant ConstraintDefinedInCompartment	
+	invariant ConstraintRolesInSameCompartment
+	
+//RoleType
+feature Role_Inheritance
+	invariant RoleDefinedInCompartment
+feature not_Role_Inheritance
+	invariant RoleDefinedInExactlyOneCompartment
+	
+//Role Constraints
+feature not_Role_Implication
+	invariant RoleImplicationNotAllowed	
+	
+feature not_Role_Prohibition
+	invariant RoleProhibitionNotAllowed	
+	
+feature not_Role_Equivalence
+	invariant RoleEquivalenceNotAllowed	
+	
+feature not_Group_Constraints
+	invariant RoleGroupNotAllowed	
+	
+feature not_Occurrence_Constraints
+	invariant RoleOccurrenceConstraintNotAllowed	
+
+//Relationships
+feature Relationship_Cardinality
+	invariant RelationshipHasCardinality	
+	
+feature not_Relationship_Cardinality
+	invariant RelationshipCardinalityNotAllowed	
+
+//Intra
+feature Intra_Relationship_Constraints
+	invariant IntraRelationshipContainsValidRelationship	
+	
+feature not_Intra_Relationship_Constraints
+	invariant IntraRelationshipNotAllowed	
+
+//Inter
+feature Inter_Relationship_Constraints
+	invariant InterRelationshipsAreDistinct	
+	invariant InterRelationshipInSameCompartment
+	
+feature not_Inter_Relationship_Constraints
+	invariant InterRelationshipConstraintsNotAllowed	
+
+//CompartmentType
+feature Compartment_Inheritance
+	invariant axiom_7_24
+	invariant axiom_7_25

@@ -1,0 +1,569 @@
+import 'platform:/resource/org.rosi.crom.metamodel/model/crom_l1_composed.ecore'
+
+package crom_l1_composed
+
+context Model
+
+--Helper methods
+
+--creates a rich invariant, specified in https://wiki.eclipse.org/OCL/New_and_Noteworthy/Luna
+def: 
+customError(status : Boolean, message : String) :  Tuple(message:String, status:Boolean) =
+Tuple{
+	status : Boolean = status,
+	message : String = message
+	--,severity : Integer = -1
+}
+
+--converts Collections to a concatenated string
+def:
+collectionToString(set : Collection(OclAny)) : String =
+set->iterate(obj : OclAny; string : String = '' |
+	string.concat(prettify(obj)).concat('\n')
+)
+
+def:
+prettify(obj : OclAny) : String = 
+if obj.oclIsKindOf(CompartmentType) then obj.oclAsType(CompartmentType).name
+elseif obj.oclIsKindOf(RoleType) then obj.oclAsType(RoleType).name
+else obj.toString()
+endif
+
+
+--checks if r is a RoleType or a RoleGroup and returns the CompartmentType, which contains r
+def:
+getCT(r : Relation) : CompartmentType = 
+r.oclContainer().oclAsType(CompartmentType)
+
+def:
+getCT(r : AbstractRole) : CompartmentType =
+if r.oclContainer().oclIsKindOf(RoleGroup)
+then 
+r.oclContainer().oclContainer().oclContainer().oclAsType(CompartmentType)
+else
+r.oclContainer().oclContainer().oclAsType(CompartmentType)
+endif
+
+
+--recursive check if a RoleType exists in an AbstractRole(Rolegroup or RoleType)
+def: atom_exists(abstractRole : AbstractRole, roleType: RoleType) : Boolean =
+if abstractRole.oclIsKindOf(RoleGroup)
+then abstractRole.oclAsType(RoleGroup).elements->exists(e | atom_exists(e.oclAsType(AbstractRole), roleType))
+else abstractRole = roleType
+endif
+
+--checks if RoleType exists in Collection(AbstractRole)
+def:
+includesRoleType(abstractRoleBag : Collection(AbstractRole), roleType: RoleType) : Boolean =
+abstractRoleBag->exists(abstractRole | atom_exists(abstractRole, roleType))
+
+
+-- Global Variables
+def: 
+nt : Set(NaturalType) = self.elements->selectByKind(NaturalType)
+
+def: 
+ct : Set(CompartmentType) = CompartmentType.allInstances()
+
+def:
+rt : Set(RoleType) = RoleType.allInstances()
+
+def:
+t : Set(ModelElement) = self.nt->union(self.ct)
+
+def:
+rst : Set(Relationship) = Relationship.allInstances()
+
+def:
+rel :
+Map(
+	Tuple(rst : Relationship, ct : CompartmentType),
+	Tuple(rt1 : RoleType, rt2 : RoleType)
+) = 
+self.rst->iterate(rst : Relationship; rels : Map(Tuple(rst : Relationship, ct : CompartmentType),Tuple(rt1 : RoleType, rt2 : RoleType)) = Map{} | 
+	rels->including(
+		Tuple{rst=rst, ct=getCT(rst)},
+		Tuple{rt1=rst.first.holder, rt2=rst.second.holder}
+	)
+)
+
+
+def: 
+fills : 
+Set(
+	Tuple(
+		t : Type,
+		ct : CompartmentType,
+		rt : AbstractRole
+	)
+) =
+Fulfillment.allInstances()->iterate(fulfillment : Fulfillment; fills : Set(Tuple(t : Type, ct : CompartmentType, rt : AbstractRole)) = Set{} |  
+	fills->including(
+		Tuple{
+			t=fulfillment.filler,
+			ct=getCT(fulfillment.filled),
+			rt=fulfillment.filled
+		}
+	)
+)
+
+def:
+rolec : 
+Map(
+	CompartmentType,
+	Sequence(
+		Tuple(
+			card : Tuple(lower : ecore::EInt, upper : ecore::EInt),
+			rg : AbstractRole
+		)
+	)			
+) = 
+Part.allInstances()->iterate(part : Part; rolec : Map(CompartmentType,Sequence(Tuple(card : Tuple(lower : ecore::EInt, upper : ecore::EInt),rg : AbstractRole))) = Map{} | 
+	let ct : CompartmentType = part.whole in
+	if rolec->includes(ct)
+	then
+		rolec->including(
+			ct,
+			--OCL iterate Eigenheit
+			rolec->at(ct)->append(
+					Tuple{
+					card=Tuple{
+						lower=part.lower,
+						upper=part.upper
+					},
+					rg=part.role
+				}
+			)
+		)
+	else	
+		rolec->including(
+			ct,
+			Sequence{
+				Tuple{
+					card=Tuple{
+						lower=part.lower,
+						upper=part.upper
+					},
+					rg=part.role
+				}
+			}
+		)	
+	endif
+)
+
+def: 
+card : Map(
+			Tuple(rst : Relationship, ct : CompartmentType),
+			Tuple(
+				first : Tuple(lower : ecore::EInt, upper : ecore::EInt),
+				second : Tuple(lower : ecore::EInt, upper : ecore::EInt)
+			)
+	) =
+rst->iterate(rst : Relationship; card : Map(Tuple(rst : Relationship, ct : CompartmentType), Tuple(first : Tuple(lower : ecore::EInt, upper : ecore::EInt), second : Tuple(lower : ecore::EInt, upper : ecore::EInt))) = Map{} | 
+	card->including(
+		Tuple{
+				rst=rst,
+				ct=getCT(rst)
+		},
+		Tuple{
+			first=Tuple{
+				lower=rst.first.lower,
+				upper=rst.first.upper
+			},
+			second=Tuple{
+				lower=rst.second.lower,
+				upper=rst.second.upper
+			}
+		}
+	)
+)
+
+
+
+def: 
+intra : Set(
+	Tuple(
+		rst : Relationship,
+		ct : CompartmentType,
+		c : String
+	)
+) =
+IntraRelationshipConstraint.allInstances()->iterate(intraRel : IntraRelationshipConstraint; intra : Set(Tuple(rst : Relationship, ct : CompartmentType, c : String)) = Set{} |  
+	intra->including(
+		Tuple{
+			rst=intraRel.relation,
+			ct=getCT(intraRel),
+			c=intraRel.toString()
+		}
+	)
+)
+			
+def: 
+inter : Map(
+	Tuple(
+		first : Relationship,
+		ct : CompartmentType,
+		second : Relationship		
+	),
+	InterRelationshipConstraint
+) =
+InterRelationshipConstraint.allInstances()->iterate(interRel : InterRelationshipConstraint; inter : Map(Tuple(first:Relationship,ct:CompartmentType,second:Relationship),InterRelationshipConstraint) = Map{} |
+	inter->including(
+		Tuple{
+			first=interRel.first,
+			ct=getCT(interRel),
+			second=interRel.second
+		},
+		interRel
+	)
+)
+
+-- Inheritance 
+def: 
+prec_ct : 
+Set(CompartmentInheritance) =
+CompartmentInheritance.allInstances()
+
+def: 
+prec_nt : 
+Set(NaturalInheritance) =
+NaturalInheritance.allInstances()
+
+def: 
+preceq_ct : 
+Set(CompartmentInheritance) =
+transitive_closure(self.prec_ct)->union(reflexive_closure(self.ct))
+
+def: 
+preceq_nt : 
+Set(NaturalInheritance) =
+Set{}--transitive_closure(self.prec_nt)->union(reflexive_closure(self.nt))
+
+
+--Constraints
+--Universal
+
+inv CompartmentContainsRoles:
+let failedCompartmentTypes : Set(CompartmentType) = 
+self.ct->select(
+			ct | ct.parts->isEmpty()
+		) 
+in
+customError(
+	failedCompartmentTypes->isEmpty(),
+	'Every CompartmentType must define at least one RoleType. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
+)
+
+
+inv CompartmentContainsFilledRoles:
+let failedCompartmentTypes : Set(CompartmentType) = 
+self.ct->select(
+			ct | not self.fills->exists(
+				f | f.ct = ct
+			)
+		) 
+in
+customError(
+	failedCompartmentTypes->isEmpty(),
+	'A RoleType in a Compartment needs to be filled. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
+)
+
+inv RelationshipDefinedInCompartment:
+let failedRelationshipType : Set(Relationship) = 
+self.rst->select(
+			rst | not self.ct->exists(
+	 			ct | self.rel->includes(Tuple{rst=rst, ct=ct})
+		 	)
+		)
+in
+customError(
+	failedRelationshipType->isEmpty(),
+	'Every Relationship needs to be defined in a CompartmentType. Failed for Relationship(s): ' + collectionToString(failedRelationshipType)
+)
+
+
+inv RelationshipRolesAreDistinct:
+let failedRelationships : Bag(Tuple(rt1:RoleType, rt2:RoleType)) = 
+self.rel.values()->select(
+			val | val.rt1.name = val.rt2.name
+		)
+in
+customError(
+	failedRelationships->isEmpty(),
+	'Relationships between the same RoleTypes are not allowed. Failed for Relationship(s): '
+	+ collectionToString(failedRelationships)
+)
+
+
+inv RelationshipRolesInSameCompartment:
+let failedRelationships : Bag(Tuple(rt1:RoleType, rt2:RoleType)) = 
+self.rel.values()->select(
+			val | getCT(val.rt1) <> getCT(val.rt2)
+		)
+in
+customError(
+	failedRelationships->isEmpty(),
+	'The RoleTypes of a Relationship need to be in the same CompartmentType. Failed for Relationship(s): '
+	+ collectionToString(failedRelationships)
+)
+
+
+inv RoleFilled:
+let failedRoleTypes : Set(RoleType) = 
+self.rt->select(
+			rt | not self.fills->exists(
+				f| atom_exists(f.rt, rt)
+			)
+		)
+in
+customError(
+	failedRoleTypes->isEmpty(),
+	'Every RoleType must be filled. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
+)
+
+inv ConstraintDefinedInCompartment:
+let failedRoleConstraints : Set(RoleConstraint) = 
+RoleConstraint.allInstances()->select(
+	roleConstraint | getCT(roleConstraint) = null
+)
+in
+customError(
+	failedRoleConstraints->isEmpty(),
+	'Constraints cannot be defined outside of a Compartment Type. Failed for RoleConstraint(s): ' 
+	+ collectionToString(failedRoleConstraints)
+)
+
+inv ConstraintRolesInSameCompartment:
+let failedCompartmentTypes : Set(CompartmentType) = 
+self.ct->select(
+	ct | not ct.constraints->forAll(
+		constraint |		
+		if constraint.oclIsKindOf(RoleConstraint)
+		then 
+			let roleConstraint : RoleConstraint = constraint.oclAsType(RoleConstraint) in 
+			ct.parts.role->includes(roleConstraint.first)
+			and
+			ct.parts.role->includes(roleConstraint.second)
+		else true
+		endif
+	)
+)
+in
+customError(
+	failedCompartmentTypes->isEmpty(),
+	'Both RoleTypes of a RoleConstraint need to be defined in the same Compartment Type. Error in CompartmentType(s): ' 
+	+ collectionToString(failedCompartmentTypes)
+)
+
+--Dependent Features
+
+inv RoleDefinedInCompartment:
+let failedRoleTypes : Set(RoleType) = 
+self.rt->select(
+			rt | not self.ct->exists(
+				ct | includesRoleType(ct.parts.role, rt)
+			)	
+		)
+in
+customError(
+	failedRoleTypes->isEmpty(),
+	'Every RoleType must be defined in a CompartmentType. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
+)
+
+
+inv RoleDefinedInExactlyOneCompartment:
+let failedRoleTypes : Set(RoleType) = 
+self.rt->select(
+			rt | not self.ct->one(
+				ct | includesRoleType(ct.parts.role, rt)
+			)	
+		)
+in
+customError(
+	failedRoleTypes->isEmpty(),
+	'Every RoleType must be defined in exactly one CompartmentType. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
+)
+
+--todo: add detailed error messages
+inv RoleImplicationNotAllowed:
+customError(
+	RoleImplication.allInstances()->isEmpty(),
+	'Role implications are not allowed.' 
+)
+
+inv RoleProhibitionNotAllowed:
+customError(
+	RoleProhibition.allInstances()->isEmpty(),
+	'Role prohibitions are not allowed.' 
+)
+
+inv RoleEquivalenceNotAllowed:
+customError(
+	RoleEquivalence.allInstances()->isEmpty(),
+	'Role equivalences are not allowed.' 
+)
+
+inv RoleGroupNotAllowed:
+customError(
+	self.ct->forAll(
+		ct | not ct.parts->exists(part | part.oclIsKindOf(RoleGroup))
+	),
+	'Role groups are not allowed.' 
+)
+
+inv RoleOccurrenceConstraintNotAllowed:
+customError(
+	self.ct->forAll(
+		ct | not ct.parts->exists(
+			part | part.lower <> null or part.upper <> null
+		)
+	),
+	'Occurence constraints are not allowed.' 
+)
+
+inv RelationshipHasCardinality:
+customError(
+	self.rel->includesAll(self.card.keys()),
+	'Cardinalities need to be defined between Relationships.' 
+)
+
+inv RelationshipCardinalityNotAllowed:
+customError(
+	self.card.values()->forAll(
+	val | val.first.lower = 0 and val.first.upper = -1	
+	and val.second.lower = 0 and val.second.upper = -1
+	),
+	'Relationship cardinalities are not allowed.' 
+)
+
+inv IntraRelationshipContainsValidRelationship:
+customError(
+	self.intra->forAll(
+		intra | self.rel.includes(Tuple{rst=intra.rst,ct=intra.ct})
+	),
+	'Every Intra relationship constraint...' 
+)
+
+inv IntraRelationshipNotAllowed:
+customError(
+	self.intra->isEmpty(),
+	'Intra relationship constraints are not allowed.' 
+)
+
+inv Inter_Relationship_Constraints:
+customError(
+	self.inter.keys()->forAll(
+		inter | inter.first <> inter.second
+		and self.rel->includes(Tuple{rst=inter.first,ct=inter.ct})
+		and self.rel->includes(Tuple{rst=inter.second,ct=inter.ct})
+	),
+	'The Relationship Types of an Inter Relationship Constraint can not be the same....' 
+)
+
+inv InterRelationshipsAreDistinct:
+let failedInterRelationshipConstraints : Set(String) =
+self.inter.keys()->iterate(inter : Tuple(ct:CompartmentType, first:Relationship, second:Relationship); failedInterRelationshipConstraints : Set(String) = Set{}|
+	if inter.first = inter.second
+	then failedInterRelationshipConstraints->including(
+		'InterRelationshipConstraint('
+		+ inter.first.name + '/' + inter.second.name
+		+ ') in ' + inter.ct.name
+	)
+	else failedInterRelationshipConstraints
+	endif	
+)
+in
+customError(
+	failedInterRelationshipConstraints->isEmpty(),
+	'The Relationship Types of an InterRelationshipConstraint can not be the same. Failed for InterRelationshipConstraint(s):\n' 
+	+ collectionToString(failedInterRelationshipConstraints)
+)
+
+inv InterRelationshipInSameCompartment:
+let failedInterRelationshipConstraints : Set(String) =
+self.inter.keys()->iterate(inter : Tuple(ct:CompartmentType, first:Relationship, second:Relationship); failedInterRelationshipConstraints : Set(String) = Set{}|
+	if self.rel->excludes(Tuple{rst=inter.first,ct=inter.ct}) or self.rel->excludes(Tuple{rst=inter.second,ct=inter.ct})
+	then failedInterRelationshipConstraints->including(
+		'InterRelationshipConstraint('
+		+ inter.first.name + '/' + inter.second.name
+		+ ') in ' + inter.ct.name
+	)
+	else failedInterRelationshipConstraints
+	endif	
+)
+in
+customError(
+	failedInterRelationshipConstraints->isEmpty(),
+	'The Relationship Types of an InterRelationshipConstraint must be in the same Compartment Type. Failed for InterRelationshipConstraint(s): ' 
+	+ collectionToString(failedInterRelationshipConstraints)
+)
+
+inv InterRelationshipConstraintsNotAllowed:
+customError(
+	self.inter->isEmpty(),
+	'Inter relationship constraints are not allowed.' 
+)
+
+--testing
+inv axiom_7_24:
+self.preceq_ct->forAll(
+	preceq_ct | preceq_ct.sub.parts->includesAll(preceq_ct.super.parts)
+)
+
+--testing
+inv axiom_7_25:
+self.preceq_ct->forAll(
+	preceq_ct | self.rel.keys()->select(rel_key | rel_key.ct = preceq_ct.super)->forAll(
+		rel_key | self.rel->includes(Tuple{rst=rel_key.rst, ct=preceq_ct.sub})
+		implies rel_key = self.rel->at(Tuple{rst=rel_key.rst, ct=preceq_ct.sub})
+	)
+)
+
+
+-- calculates transitive closure recursive
+def:
+transitive_closure(closure : Set(CompartmentInheritance)):
+Set(CompartmentInheritance) = 
+let new_relations : Set(CompartmentInheritance) = new_relations(closure),
+closure_until_now : Set(CompartmentInheritance) = closure->union(new_relations)
+in
+if closure_until_now = closure
+then closure
+else transitive_closure(closure_until_now)
+endif
+
+def: 
+new_relations(closure : Set(CompartmentInheritance)):  
+Set(CompartmentInheritance) = 
+--todo:Optimize
+closure->iterate(x_y:CompartmentInheritance;new_relations:Set(CompartmentInheritance) = Set{} |
+	closure->iterate(q_w:CompartmentInheritance;tmp:Set(CompartmentInheritance) = Set{} |
+		if x_y.sub = q_w.super then
+		new_relations->includingAll(
+			tmp->including(
+				CompartmentInheritance{
+					super=x_y.super,
+					sub=q_w.sub
+				}	
+			)
+		)
+		else new_relations->includingAll(tmp)
+		endif
+	)
+)
+
+def:
+reflexive_closure(closure : Set(CompartmentType)): 
+Set(CompartmentInheritance) = 
+closure->iterate(element : CompartmentType;tuple : Set(CompartmentInheritance) = Set{} |
+	tuple->including(
+		CompartmentInheritance{
+			super=element,
+			sub=element
+		}
+	)
+)
+
+endpackage
+
+
