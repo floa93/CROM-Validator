@@ -1,0 +1,139 @@
+//Universal Constraints
+feature true
+	invariant CompartmentContainsRoles
+	invariant CompartmentContainsFilledRoles
+	invariant RelationshipDefinedInCompartment	
+	invariant RelationshipRolesAreDistinct	
+	invariant RelationshipRolesInSameCompartment
+	invariant RoleFilled
+	invariant ConstraintDefinedInCompartment	
+	invariant ConstraintRolesInSameCompartment
+
+	
+//RoleType
+feature not(Role_Properties)
+	invariant RolePropertiesNotAllowed
+	
+feature not(Role_Behavior)
+	invariant RoleBehaviorNotAllowed
+	
+feature not(Role_Inheritance)
+	invariant RoleDefinedInExactlyOneCompartment
+	invariant RoleInheritanceNotAllowed
+	
+//Playable
+feature not(Naturals)
+	invariant RolePlayableByNaturalNotAllowed
+	
+feature not(Roles)
+	invariant RolePlayableByRoleNotAllowed
+
+feature not(Compartments)
+	invariant RolePlayableByCompartmentNotAllowed
+	
+feature not(Dates)
+	invariant RolePlayableByDataNotAllowed
+	
+//Role Constraints
+feature not(Role_Implication)
+	invariant RoleImplicationNotAllowed	
+	
+feature not(Role_Prohibition)
+	invariant RoleProhibitionNotAllowed	
+	
+feature not(Role_Equivalence)
+	invariant RoleEquivalenceNotAllowed	
+	
+feature not(Group_Constraints)
+	invariant RoleGroupNotAllowed	
+	
+feature not(Occurrence_Constraints)
+	invariant RoleOccurrenceConstraintNotAllowed	
+
+//Relationships
+feature Relationship_Cardinality
+	invariant RelationshipHasCardinality	
+	
+feature not(Relationship_Cardinality)
+	invariant RelationshipCardinalityNotAllowed	
+
+//Intra
+feature Intra_Relationship_Constraints
+	invariant IntraRelationshipContainsValidRelationship	
+	
+feature not(Intra_Relationship_Constraints)
+	invariant IntraRelationshipConstraintsNotAllowed	
+
+//Inter
+feature Inter_Relationship_Constraints
+	invariant InterRelationshipsAreDistinct	
+	invariant InterRelationshipInSameCompartment
+	
+feature not(Inter_Relationship_Constraints)
+	invariant InterRelationshipConstraintsNotAllowed	
+
+//CompartmentType
+feature not(Compartment_Properties)
+	invariant CompartmentPropertiesNotAllowed
+	
+feature not(Compartment_Behavior)
+	invariant CompartmentBehaviorNotAllowed
+
+feature Compartment_Inheritance
+	invariant a_7_23
+	invariant SubCompartmentContainsRoleTypesOfBaseCompartment
+	invariant SubCompartmentContainsRelationshipsOfBaseCompartment
+	invariant SubCompartmentRelationshipsEqualsBaseCompartmentRelationships
+	//invariant RestrictSubPlayers
+
+feature not(Compartment_Inheritance)
+	invariant CompartmentInheritanceNotAllowed
+	
+feature not(Contains_Compartments)
+	invariant CompartmentContainsCompartmentNotAllowed
+	
+//DataType
+feature not(Data_Type_Inheritance)
+	invariant DataTypeInheritanceNotAllowed
+
+
+//Features:
+//-----------------------
+//RML_Feature_Model
+//Role_Types
+//Role_Structure
+//Role_Properties
+//Role_Behavior
+//Role_Inheritance
+//Playable
+//Players
+//Naturals
+//Roles
+//Compartments
+//Dates
+//Dependent
+//On_Compartments
+//On_Relationships
+//Role_Constraints
+//Role_Implication
+//Role_Prohibition
+//Role_Equivalence
+//Group_Constraints
+//Occurrence_Constraints
+//Relationships
+//Relationship_Constraints
+//Relationship_Cardinality
+//Intra_Relationship_Constraints
+//Parthood_Constraints
+//Inter_Relationship_Constraints
+//Compartment_Types
+//Compartment_Structure
+//Compartment_Properties
+//Compartment_Behavior
+//Compartment_Inheritance
+//Participants
+//Contains_Compartments
+//Playable_by_Defining_Compartment
+//Data_Types
+//Data_Type_Inheritance
+//-----------------------

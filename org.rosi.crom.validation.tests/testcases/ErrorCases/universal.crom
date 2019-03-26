@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ASCII"?>
+<crom_l1_composed:Model xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:crom_l1_composed="platform:/resource/org.rosi.crom.metamodel/">
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="CompartmentContainsRoles"/>
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="CompartmentContainsFilledRoles">
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="roleTypeA"/>
+    </parts>
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="relRoleC" outgoing="//@elements.2/@relationships.1"/>
+    </parts>
+  </elements>
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="RelationshipRolesAreDistinct">
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="relRoleA" outgoing="//@relations.0"/>
+    </parts>
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="relRoleB" incoming="//@relations.0"/>
+    </parts>
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="relRoleD" incoming="//@elements.2/@relationships.1"/>
+    </parts>
+    <relationships name="rstDistinct">
+      <first holder="//@elements.2/@parts.0/@role"/>
+      <second holder="//@elements.2/@parts.0/@role"/>
+    </relationships>
+     <relationships name="rstSameCompartment">
+      <first holder="//@elements.1/@parts.1/@role"/>
+      <second holder="//@elements.2/@parts.2/@role"/>
+    </relationships>
+    <constraints xsi:type="crom_l1_composed:RoleImplication" first="//@elements.1/@parts.0/@role" second="//@elements.2/@parts.0/@role"/>
+  </elements>
+  <relations xsi:type="crom_l1_composed:Relationship" name="rstOutside" first="//@relations.0/@first" second="//@relations.0/@second">
+      <first holder="//@elements.2/@parts.0/@role"/>
+      <second holder="//@elements.2/@parts.1/@role"/>
+  </relations>
+  <relations xsi:type="crom_l1_composed:RoleImplication" first="//@elements.2/@parts.1/@role" second="//@elements.2/@parts.0/@role"/>
+</crom_l1_composed:Model>

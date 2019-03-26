@@ -2,13 +2,8 @@ package org.rosi.crom.validation.ocl;
 
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
-
 import org.eclipse.emf.common.util.TreeIterator;
 import org.eclipse.emf.common.util.URI;
 import org.eclipse.emf.ecore.EObject;
@@ -27,11 +22,15 @@ import org.rosi.crom.validation.Utils;
 import crom_l1_composed.Crom_l1_composedPackage;
 
 public class CompleteOCLParser {
-
 	private OCL oclInstance;
 	private EObject modelInstance;
 	private Map<String, ExpressionInOCL> constraintMap;
-	private List<String> failedConstraints;
+	
+	/**
+	 * failedConstraints is a {@link Map} collection that contains the error class {@link String} as
+	 * key and the error message {@link String} as value.
+	 */	
+	private Map<String, String> failedConstraints;
 	
 	
 	public CompleteOCLParser(EObject modelInstance) {
@@ -47,7 +46,7 @@ public class CompleteOCLParser {
 		oclInstance = OCL.newInstance(registry);				
 		
 
-		failedConstraints = new ArrayList<String>();
+		failedConstraints = new HashMap<String, String>();
 	}
 	
 	public void loadFile(URL urlCompleteOCL) {
@@ -84,15 +83,6 @@ public class CompleteOCLParser {
 		}
 	}
 	
-	public List<String> getUniversalConstraints() {		
-		Predicate<String> isUniversal = c -> c.startsWith("u_");
-		
-		return constraintMap.keySet()
-				.stream()
-				.filter(isUniversal)
-				.collect(Collectors.toList());
-	}
-	
 	public ExpressionInOCL getConstraint(String name) {		   
 		if(constraintMap.containsKey(name))
 			return constraintMap.get(name);
@@ -101,11 +91,10 @@ public class CompleteOCLParser {
 	
 	public Object evaluate(String constraintName) {
 		ExpressionInOCL expression = getConstraint(constraintName);
-		return evaluate(expression);
+		return evaluate(expression, constraintName);
 	}
 		
-	
-	public Object evaluate(ExpressionInOCL expression) {
+	public Object evaluate(ExpressionInOCL expression, String constraintName) {
 		Object result = oclInstance.evaluate(modelInstance, expression);
 		if(result instanceof TupleValue) {
 			TupleValue richInvariant = (TupleValue)result;
@@ -119,7 +108,7 @@ public class CompleteOCLParser {
 				String error = richInvariant.getValue(typeMessage).toString();
 				
 				if(!status)
-					failedConstraints.add(error);
+					failedConstraints.put(constraintName, error);
 				
 				return status;
 			}
@@ -127,12 +116,12 @@ public class CompleteOCLParser {
 		
 		//classic ocl support
 		if(result instanceof String)
-			failedConstraints.add(result.toString());
+			failedConstraints.put(constraintName, result.toString());
 		
 		return result;
 	}
 
-	public List<String> getFailedConstraints() {
+	public Map<String, String> getFailedConstraints() {
 		return failedConstraints;
 	}
 }

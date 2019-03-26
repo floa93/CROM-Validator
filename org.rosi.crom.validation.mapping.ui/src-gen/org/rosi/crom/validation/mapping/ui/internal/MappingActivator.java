@@ -13,8 +13,8 @@ import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.eclipse.xtext.ui.shared.SharedStateModule;
 import org.eclipse.xtext.util.Modules2;
 import org.osgi.framework.BundleContext;
-import org.rosi.crom.validation.mapping.FeatureMappingRuntimeModule;
-import org.rosi.crom.validation.mapping.ui.FeatureMappingUiModule;
+import org.rosi.crom.validation.mapping.OclMappingRuntimeModule;
+import org.rosi.crom.validation.mapping.ui.OclMappingUiModule;
 
 /**
  * This class was generated. Customizations should only happen in a newly
@@ -23,7 +23,7 @@ import org.rosi.crom.validation.mapping.ui.FeatureMappingUiModule;
 public class MappingActivator extends AbstractUIPlugin {
 
 	public static final String PLUGIN_ID = "org.rosi.crom.validation.mapping.ui";
-	public static final String ORG_ROSI_CROM_VALIDATION_MAPPING_FEATUREMAPPING = "org.rosi.crom.validation.mapping.FeatureMapping";
+	public static final String ORG_ROSI_CROM_VALIDATION_MAPPING_OCLMAPPING = "org.rosi.crom.validation.mapping.OclMapping";
 	
 	private static final Logger logger = Logger.getLogger(MappingActivator.class);
 	
@@ -73,15 +73,15 @@ public class MappingActivator extends AbstractUIPlugin {
 	}
 	
 	protected com.google.inject.Module getRuntimeModule(String grammar) {
-		if (ORG_ROSI_CROM_VALIDATION_MAPPING_FEATUREMAPPING.equals(grammar)) {
-			return new FeatureMappingRuntimeModule();
+		if (ORG_ROSI_CROM_VALIDATION_MAPPING_OCLMAPPING.equals(grammar)) {
+			return new OclMappingRuntimeModule();
 		}
 		throw new IllegalArgumentException(grammar);
 	}
 	
 	protected com.google.inject.Module getUiModule(String grammar) {
-		if (ORG_ROSI_CROM_VALIDATION_MAPPING_FEATUREMAPPING.equals(grammar)) {
-			return new FeatureMappingUiModule(this);
+		if (ORG_ROSI_CROM_VALIDATION_MAPPING_OCLMAPPING.equals(grammar)) {
+			return new OclMappingUiModule(this);
 		}
 		throw new IllegalArgumentException(grammar);
 	}

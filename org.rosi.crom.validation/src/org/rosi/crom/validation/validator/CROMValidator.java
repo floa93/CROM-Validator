@@ -5,21 +5,21 @@ import org.eclipse.emf.ecore.resource.Resource;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ocl.pivot.ExpressionInOCL;
 import org.eclipse.ocl.pivot.values.CollectionValue;
-import org.eclipse.ocl.pivot.values.SetValue;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Shell;
-import org.rosi.crom.toformal.builder.CROMVisitor;
-import org.rosi.crom.toformal.builder.CROModel;
 import org.rosi.crom.validation.Log;
 import org.rosi.crom.validation.config.ConfigLoader;
+import org.rosi.crom.validation.mapping.OCLFeatureMapping;
 import org.rosi.crom.validation.ocl.CompleteOCLParser;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import crom_l1_composed.Model;
-import mapping.FeatureMapping;
 
 
 public class CROMValidator{
@@ -52,58 +52,92 @@ public class CROMValidator{
         });
 	}
 	
-	public void validate(IPath path, Resource resource, Resource resourceIORM) {
-		
+	public void validate(IPath path, Resource cromResource) {
 		//check , Resource resourceIORM for null
-		if (!(resource.getContents().isEmpty() || resource.getContents().get(0) instanceof Model))
+		if (!(cromResource.getContents().isEmpty() || cromResource.getContents().get(0) instanceof Model))
 			throw new IllegalArgumentException("The given CROM model '" + path.toPortableString() + "' was empty?");
 			
+		/*
+		ValidationMarker mark = new ValidationMarker();
+		mark.mark(path, resource);
+		
+		if(1==1)
+			return;
+		*/
 		// Crom_l1_composed Model
-		Model cromModel = (Model)resource.getContents().get(0);
-		CROModel cromBuilder = new CROModel();
-        CROMVisitor visitor = new CROMVisitor();
-        visitor.visit(cromBuilder, cromModel);
+		Model cromModel = (Model)cromResource.getContents().get(0);		
+		//CROModel cromBuilder = new CROModel();
+        //CROMVisitor visitor = new CROMVisitor();
+        //visitor.visit(cromBuilder, cromModel);
         
 		//CompleteOCL
 		CompleteOCLParser completeOCLParser = new CompleteOCLParser(cromModel);
 		//Load OCL validation file
-		URL oclURL = getClass().getResource("/constraints/crom_l1_composed_pivot.ocl");
+		URL oclURL = getClass().getResource("/constraints/crom_constraints.ocl");
 		completeOCLParser.loadFile(oclURL);
-		
-		//Evaluate Static Constraints : u_
-		evaluateStaticConstraints(completeOCLParser);
-		
-		//
-		URL featureMappingURL = getClass().getResource("/featuremapping/rules.featuremapping");
-		FeatureMapping featureMapping = new FeatureMapping(featureMappingURL);
-		
+
 		//Load Configuration
 		ConfigLoader configLoader = new ConfigLoader(path);
-		evaluateDynamicConstraints(completeOCLParser, configLoader.getConfigList(), featureMapping);
+		configLoader.printConfig();
 		
-		getResults(shell, completeOCLParser);
+		//Feature Mapping
+		URL featureMappingURL = getClass().getResource("/oclmapping/rules.oclmapping");
+		OCLFeatureMapping featureMapping = new OCLFeatureMapping(featureMappingURL, configLoader.getConfigList());
 		
+		evaluateOclConstraints(completeOCLParser, featureMapping);
+		
+		printResults(shell, completeOCLParser);
 	}
 	
-	private void evaluateStaticConstraints(CompleteOCLParser oclParser) {
-		List<String> constraints = oclParser.getUniversalConstraints();
-
-		for(String constraint : constraints) {
-			Object result = oclParser.evaluate(constraint);
-			printf("%s: %s", constraint, result);
-			
-		}
+	/**
+	 * @param cromResource
+	 * @param configList
+	 * @return Map, in which error classes are keys and the corresponding error messages are values 
+	 */
+	public Map<String, String> validate(Resource cromResource, List<String> configList) {
+		// Load crom_l1_composed.Model from a .crom Resource
+		crom_l1_composed.Model cromModel = (crom_l1_composed.Model)cromResource.getContents().get(0);	
+		return validate(cromModel, configList);
 	}
 	
-	private void evaluateDynamicConstraints(CompleteOCLParser oclParser, List<String> features, FeatureMapping featureMapping) {
-		System.out.println(features);
-		Map<String, Set<String>> featureMap = featureMapping.getFeatureMap();
+	/**
+	 * @param cromModel
+	 * @param configList
+	 * @return Map, in which error classes are keys and the corresponding error messages are values 
+	 */
+	public Map<String, String> validate(crom_l1_composed.Model cromModel, List<String> configList) {
+		//CompleteOCL
+		CompleteOCLParser completeOCLParser = new CompleteOCLParser(cromModel);
+		//Load OCL validation file
+		URL oclURL = getClass().getResource("/constraints/crom_constraints.ocl");
+		completeOCLParser.loadFile(oclURL);
 		
-		//universal constraints
-		for(String invariant : featureMap.get(FeatureMapping.UNIVERSAL_CONSTRAINT)) {
+		//Feature Mapping
+		URL featureMappingURL = getClass().getResource("/oclmapping/rules.oclmapping");
+		OCLFeatureMapping featureMapping = new OCLFeatureMapping(featureMappingURL, configList);
+		
+		evaluateOclConstraints(completeOCLParser, featureMapping);
+		
+		Map<String, String> errorList = completeOCLParser.getFailedConstraints();
+		return errorList;
+	}
+	
+	public static<T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c) {
+	  List<T> list = new ArrayList<T>(c);
+	  Collections.sort(list);
+	  return list;
+	}
+	
+	private void evaluateOclConstraints(CompleteOCLParser oclParser, OCLFeatureMapping featureMapping) {
+		Set<String> invariants = featureMapping.getInvariants();
+		
+		//todo: remove, just for easier testing
+		List<String> sortedInvariants = asSortedList(invariants);
+		
+		for(String invariant : sortedInvariants) {
 			ExpressionInOCL constraint = oclParser.getConstraint(invariant);
 			if(constraint != null) {
-				Object result = oclParser.evaluate(constraint);
+				Object result = oclParser.evaluate(constraint, invariant);
 				if(result instanceof CollectionValue) {
 					CollectionValue setValue = (CollectionValue)result;
 					printf("%s: [%s]%s", invariant, setValue.size().toString(), setValue.getElements().toString());
@@ -115,39 +149,24 @@ public class CROMValidator{
 				printf("COULD NOT FIND CONSTRAINT %s in OCL", invariant);
 			}
 		}
-		
-		//dynamic
-		for(String feature : features) {	
-			if(featureMap.containsKey(feature)){
-				for(String invariant : featureMap.get(feature)) {
-					ExpressionInOCL constraint = oclParser.getConstraint(invariant);
-					if(constraint != null) {
-						Object result = oclParser.evaluate(constraint);
-						printf("%s: %s", invariant, result);
-					}
-					else {
-						printf("COULD NOT FIND CONSTRAINT %s in OCL", invariant);
-					}
-				}
-			}			
-		}	
 	}
 	
-	private void getResults(Shell shell, CompleteOCLParser oclParser) {
-		List<String> errorList = oclParser.getFailedConstraints();
+	private void printResults(Shell shell, CompleteOCLParser oclParser) {
+		Map<String, String> failedConstraints = oclParser.getFailedConstraints();
 
-		if(errorList.isEmpty()) {
+		if(failedConstraints.isEmpty()) {
 			alertInfo("CROM is wellformed");
 		}
 		else {
 			printf("Please fix the following errors:");
 			
-			for(String error : errorList) {
-				printf(error);
-				Log.error(error);
+			for(String errorMessage : failedConstraints.values()) {
+				printf(errorMessage);
+				Log.error(errorMessage);
 			}
 			
-			String errors = String.join("\n", errorList);
+			
+			String errors = String.join("\n", failedConstraints.values());
 			//run SWT stuff in Display Thread			
 			alertError("CROM is not wellformed. Fix the following errors:\n\n" + errors);
 		}

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ASCII"?>
+<crom_l1_composed:Model xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:crom_l1_composed="platform:/resource/org.rosi.crom.metamodel/">
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="compartmentType">
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="roleType" outgoing="//@elements.0/@relationships.0"/>
+    </parts>
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="roleType1" incoming="//@elements.0/@relationships.0"/>
+    </parts>
+    <relationships name="rst">
+      <first holder="//@elements.0/@parts.0/@role"/>
+      <second holder="//@elements.0/@parts.1/@role"/>
+    </relationships>
+    <constraints xsi:type="crom_l1_composed:Acyclic" relation="//@relations.0"/>
+    <constraints xsi:type="crom_l1_composed:RelationshipExclusion" first="//@elements.0/@relationships.0" second="//@elements.0/@relationships.0"/>
+    <constraints xsi:type="crom_l1_composed:RelationshipExclusion" first="//@elements.0/@relationships.0" second="//@elements.1/@relationships.0"/>
+  </elements>
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="compartmentType1">
+  <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="roleType2" outgoing="//@elements.1/@relationships.0"/>
+    </parts>
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="roleType3" incoming="//@elements.1/@relationships.0"/>
+    </parts>
+    <relationships name="rst1">
+      <first holder="//@elements.1/@parts.0/@role"/>
+      <second holder="//@elements.1/@parts.1/@role"/>
+    </relationships>
+   </elements>
+   <relations xsi:type="crom_l1_composed:Relationship" name="rstOutside" first="//@relations.0/@first" second="//@relations.0/@second">
+      <first holder="//@elements.0/@parts.0/@role"/>
+      <second holder="//@elements.0/@parts.1/@role"/>
+  </relations>
+</crom_l1_composed:Model>

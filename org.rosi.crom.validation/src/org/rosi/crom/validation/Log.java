@@ -12,19 +12,19 @@ public class Log {
 		.log(new Status(status, Activator.PLUGIN_ID, message));
 	}
 
-	public static void error(String message) {
-		log(IStatus.ERROR, message);
+	public static void error(String message, Object... args) {
+		log(IStatus.ERROR, String.format(message, args));
 	}
 	
-	public static void info(String message) {
-		log(IStatus.INFO, message);
+	public static void info(String message, Object... args) {
+		log(IStatus.INFO, String.format(message, args));
 	}
 	
-	public static void warning(String message) {
-		log(IStatus.WARNING, message);
+	public static void warning(String message, Object... args) {
+		log(IStatus.WARNING, String.format(message, args));
 	}
 	
-	public static void ok(String message) {
-		log(IStatus.OK, message);
+	public static void ok(String message, Object... args) {
+		log(IStatus.OK, String.format(message, args));
 	}
 }

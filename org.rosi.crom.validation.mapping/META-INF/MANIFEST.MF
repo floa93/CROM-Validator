@@ -19,12 +19,12 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: org.rosi.crom.validation.mapping,
  org.rosi.crom.validation.mapping.scoping,
  org.rosi.crom.validation.mapping.generator,
- org.rosi.crom.validation.mapping.featureMapping.impl,
+ org.rosi.crom.validation.mapping.oclMapping.impl,
  org.rosi.crom.validation.mapping.validation,
  org.rosi.crom.validation.mapping.services,
- org.rosi.crom.validation.mapping.featureMapping.util,
  org.rosi.crom.validation.mapping.serializer,
  org.rosi.crom.validation.mapping.parser.antlr,
+ org.rosi.crom.validation.mapping.oclMapping.util,
  org.rosi.crom.validation.mapping.parser.antlr.internal,
- org.rosi.crom.validation.mapping.featureMapping
+ org.rosi.crom.validation.mapping.oclMapping
 Import-Package: org.apache.log4j

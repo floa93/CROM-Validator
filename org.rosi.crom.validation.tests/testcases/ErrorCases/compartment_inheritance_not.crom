@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="ASCII"?>
+<crom_l1_composed:Model xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:crom_l1_composed="platform:/resource/org.rosi.crom.metamodel/">
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="compartmentParent" incoming="//@relations.0"/>
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="compartmentChild" outgoing="//@relations.0">
+    <contains name="compartmentType"/>
+  </elements>
+  <elements xsi:type="crom_l1_composed:DataType" name="dataParent" incoming="//@relations.1"/>
+  <elements xsi:type="crom_l1_composed:DataType" name="dataChild" outgoing="//@relations.1"/>
+  <relations xsi:type="crom_l1_composed:CompartmentInheritance" super="//@elements.0" sub="//@elements.1"/>
+  <relations xsi:type="crom_l1_composed:DataInheritance" super="//@elements.2" sub="//@elements.3"/>
+</crom_l1_composed:Model>

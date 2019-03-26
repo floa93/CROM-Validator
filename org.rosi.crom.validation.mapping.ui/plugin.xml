@@ -4,48 +4,48 @@
 	<extension
 		point="org.eclipse.ui.editors">
 		<editor
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.XtextEditor"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.XtextEditor"
 			contributorClass="org.eclipse.ui.editors.text.TextEditorActionContributor"
 			default="true"
-			extensions="featuremapping"
-			id="org.rosi.crom.validation.mapping.FeatureMapping"
-			name="FeatureMapping Editor">
+			extensions="oclmapping"
+			id="org.rosi.crom.validation.mapping.OclMapping"
+			name="OclMapping Editor">
 		</editor>
 	</extension>
 	<extension
 		point="org.eclipse.ui.handlers">
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.hyperlinking.OpenDeclarationHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.hyperlinking.OpenDeclarationHandler"
 			commandId="org.eclipse.xtext.ui.editor.hyperlinking.OpenDeclaration">
 			<activeWhen>
 				<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 				</reference>
 			</activeWhen>
 		</handler>
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.handler.ValidateActionHandler"
-			commandId="org.rosi.crom.validation.mapping.FeatureMapping.validate">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.handler.ValidateActionHandler"
+			commandId="org.rosi.crom.validation.mapping.OclMapping.validate">
 		<activeWhen>
 			<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 			</reference>
 		</activeWhen>
 		</handler>
 		<!-- copy qualified name -->
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedNameHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedNameHandler"
 			commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName">
 			<activeWhen>
-				<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened" />
+				<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened" />
 			</activeWhen>
 		</handler>
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedNameHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedNameHandler"
 			commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.OutlineCopyQualifiedName">
 			<activeWhen>
 				<and>
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.XtextEditor.opened" />
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.XtextEditor.opened" />
 					<iterate>
 						<adapt type="org.eclipse.xtext.ui.editor.outline.IOutlineNode" />
 					</iterate>
@@ -54,22 +54,22 @@
 		</handler>
 	</extension>
 	<extension point="org.eclipse.core.expressions.definitions">
-		<definition id="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+		<definition id="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 			<and>
 				<reference definitionId="isActiveEditorAnInstanceOfXtextEditor"/>
 				<with variable="activeEditor">
 					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName"
-						value="org.rosi.crom.validation.mapping.FeatureMapping"
+						value="org.rosi.crom.validation.mapping.OclMapping"
 						forcePluginActivation="true"/>
 				</with>
 			</and>
 		</definition>
-		<definition id="org.rosi.crom.validation.mapping.FeatureMapping.XtextEditor.opened">
+		<definition id="org.rosi.crom.validation.mapping.OclMapping.XtextEditor.opened">
 			<and>
 				<reference definitionId="isXtextEditorActive"/>
 				<with variable="activeEditor">
 					<test property="org.eclipse.xtext.ui.editor.XtextEditor.languageName"
-						value="org.rosi.crom.validation.mapping.FeatureMapping"
+						value="org.rosi.crom.validation.mapping.OclMapping"
 						forcePluginActivation="true"/>
 				</with>
 			</and>
@@ -78,33 +78,33 @@
 	<extension
 			point="org.eclipse.ui.preferencePages">
 		<page
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping"
-			name="FeatureMapping">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping"
+			name="OclMapping">
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.syntaxcoloring.SyntaxColoringPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.coloring"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.syntaxcoloring.SyntaxColoringPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.coloring"
 			name="Syntax Coloring">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.templates.XtextTemplatePreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.templates"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.templates.XtextTemplatePreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.templates"
 			name="Templates">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 	</extension>
 	<extension
 			point="org.eclipse.ui.propertyPages">
 		<page
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping"
-			name="FeatureMapping">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.preferences.LanguageRootPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping"
+			name="OclMapping">
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 			<enabledWhen>
 				<adapt type="org.eclipse.core.resources.IProject"/>
 			</enabledWhen>
@@ -114,14 +114,14 @@
 	<extension
 		point="org.eclipse.ui.keywords">
 		<keyword
-			id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"
-			label="FeatureMapping"/>
+			id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"
+			label="OclMapping"/>
 	</extension>
 	<extension
 		point="org.eclipse.ui.commands">
 	<command
 			description="Trigger expensive validation"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.validate"
+			id="org.rosi.crom.validation.mapping.OclMapping.validate"
 			name="Validate">
 	</command>
 	<!-- copy qualified name -->
@@ -142,12 +142,12 @@
 		<menuContribution
 			locationURI="popup:#TextEditorContext?after=group.edit">
 			 <command
-				 commandId="org.rosi.crom.validation.mapping.FeatureMapping.validate"
+				 commandId="org.rosi.crom.validation.mapping.OclMapping.validate"
 				 style="push"
 				 tooltip="Trigger expensive validation">
 			<visibleWhen checkEnabled="false">
 				<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 				</reference>
 			</visibleWhen>
 		</command>
@@ -157,7 +157,7 @@
 			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened" />
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened" />
 				</visibleWhen>
 			</command>
 		</menuContribution>
@@ -165,7 +165,7 @@
 			<command commandId="org.eclipse.xtext.ui.editor.copyqualifiedname.EditorCopyQualifiedName"
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened" />
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened" />
 				</visibleWhen>
 			</command>
 		</menuContribution>
@@ -174,7 +174,7 @@
 				style="push" tooltip="Copy Qualified Name">
 				<visibleWhen checkEnabled="false">
 					<and>
-						<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.XtextEditor.opened" />
+						<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.XtextEditor.opened" />
 						<iterate>
 							<adapt type="org.eclipse.xtext.ui.editor.outline.IOutlineNode" />
 						</iterate>
@@ -187,7 +187,7 @@
 		<menuContribution locationURI="popup:#TextEditorContext?endof=group.find">
 			<command commandId="org.eclipse.xtext.ui.editor.FindReferences">
 				<visibleWhen checkEnabled="false">
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 					</reference>
 				</visibleWhen>
 			</command>
@@ -195,11 +195,11 @@
 	</extension>
 	<extension point="org.eclipse.ui.handlers">
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.findrefs.FindReferencesHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.findrefs.FindReferencesHandler"
 			commandId="org.eclipse.xtext.ui.editor.FindReferences">
 			<activeWhen>
 				<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 				</reference>
 			</activeWhen>
 		</handler>
@@ -207,9 +207,9 @@
 	<extension point="org.eclipse.core.contenttype.contentTypes">
 		<content-type
 			base-type="org.eclipse.core.runtime.text"
-			file-extensions="featuremapping"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.contenttype"
-			name="FeatureMapping File"
+			file-extensions="oclmapping"
+			id="org.rosi.crom.validation.mapping.OclMapping.contenttype"
+			name="OclMapping File"
 			priority="normal">
 		</content-type>
 	</extension>
@@ -217,68 +217,68 @@
 	<extension
 		point="org.eclipse.emf.ecore.extension_parser">
 		<parser
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.resource.IResourceFactory"
-			type="featuremapping">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.resource.IResourceFactory"
+			type="oclmapping">
 		</parser>
 	</extension>
 	<extension point="org.eclipse.xtext.extension_resourceServiceProvider">
 		<resourceServiceProvider
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
-			uriExtension="featuremapping">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.resource.IResourceUIServiceProvider"
+			uriExtension="oclmapping">
 		</resourceServiceProvider>
 	</extension>
-	<!-- marker definitions for org.rosi.crom.validation.mapping.FeatureMapping -->
+	<!-- marker definitions for org.rosi.crom.validation.mapping.OclMapping -->
 	<extension
-			id="featuremapping.check.fast"
-			name="FeatureMapping Problem"
+			id="oclmapping.check.fast"
+			name="OclMapping Problem"
 			point="org.eclipse.core.resources.markers">
 		<super type="org.eclipse.xtext.ui.check.fast"/>
 		<persistent value="true"/>
 	</extension>
 	<extension
-			id="featuremapping.check.normal"
-			name="FeatureMapping Problem"
+			id="oclmapping.check.normal"
+			name="OclMapping Problem"
 			point="org.eclipse.core.resources.markers">
 		<super type="org.eclipse.xtext.ui.check.normal"/>
 		<persistent value="true"/>
 	</extension>
 	<extension
-			id="featuremapping.check.expensive"
-			name="FeatureMapping Problem"
+			id="oclmapping.check.expensive"
+			name="OclMapping Problem"
 			point="org.eclipse.core.resources.markers">
 		<super type="org.eclipse.xtext.ui.check.expensive"/>
 		<persistent value="true"/>
 	</extension>
 	<extension point="org.eclipse.ui.preferencePages">
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.validation.ValidatorPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.validator.preferencePage"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.validation.ValidatorPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.validator.preferencePage"
 			name="Errors/Warnings">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 	</extension>
 	<extension point="org.eclipse.xtext.builder.participant">
 		<participant
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.builder.IXtextBuilderParticipant"
-			fileExtensions="featuremapping"/>
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.builder.IXtextBuilderParticipant"
+			fileExtensions="oclmapping"/>
 	</extension>
 	<extension point="org.eclipse.ui.preferencePages">
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.compiler.preferencePage"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.compiler.preferencePage"
 			name="Compiler">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 	</extension>
 	<extension point="org.eclipse.ui.propertyPages">
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.compiler.propertyPage"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.builder.preferences.BuilderPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.compiler.propertyPage"
 			name="Compiler">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 			<enabledWhen>
 				<adapt type="org.eclipse.core.resources.IProject"/>
 			</enabledWhen>
@@ -289,20 +289,20 @@
 		<menuContribution locationURI="popup:#TextEditorContext?after=xtext.ui.openDeclaration">
 			<command
 				commandId="org.eclipse.xtext.ui.OpenGeneratedFileCommand"
-				id="org.rosi.crom.validation.mapping.FeatureMapping.OpenGeneratedCode"
+				id="org.rosi.crom.validation.mapping.OclMapping.OpenGeneratedCode"
 				style="push">
 				<visibleWhen checkEnabled="false">
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened" />
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened" />
 				</visibleWhen>
 			</command>
 		</menuContribution>
 	</extension>
 	<extension point="org.eclipse.ui.handlers">
 		<handler
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.generator.trace.OpenGeneratedFileHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.generator.trace.OpenGeneratedFileHandler"
 			commandId="org.eclipse.xtext.ui.OpenGeneratedFileCommand">
 			<activeWhen>
-				<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened" />
+				<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened" />
 			</activeWhen>
 		</handler>
 	</extension>
@@ -310,11 +310,11 @@
 	<extension
 		point="org.eclipse.ui.handlers">
 		<handler 
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.outline.quickoutline.ShowQuickOutlineActionHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.outline.quickoutline.ShowQuickOutlineActionHandler"
 			commandId="org.eclipse.xtext.ui.editor.outline.QuickOutline">
 			<activeWhen>
 				<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 				</reference>
 			</activeWhen>
 		</handler>
@@ -334,33 +334,33 @@
 				style="push"
 				tooltip="Open Quick Outline">
 				<visibleWhen checkEnabled="false">
-					<reference definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened"/>
+					<reference definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened"/>
 				</visibleWhen>
 			</command>
 		</menuContribution>
 	</extension>
-	<!-- quickfix marker resolution generator for org.rosi.crom.validation.mapping.FeatureMapping -->
+	<!-- quickfix marker resolution generator for org.rosi.crom.validation.mapping.OclMapping -->
 	<extension
 			point="org.eclipse.ui.ide.markerResolution">
 		<markerResolutionGenerator
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-			markerType="org.rosi.crom.validation.mapping.ui.featuremapping.check.fast">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="org.rosi.crom.validation.mapping.ui.oclmapping.check.fast">
 			<attribute
 				name="FIXABLE_KEY"
 				value="true">
 			</attribute>
 		</markerResolutionGenerator>
 		<markerResolutionGenerator
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-			markerType="org.rosi.crom.validation.mapping.ui.featuremapping.check.normal">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="org.rosi.crom.validation.mapping.ui.oclmapping.check.normal">
 			<attribute
 				name="FIXABLE_KEY"
 				value="true">
 			</attribute>
 		</markerResolutionGenerator>
 		<markerResolutionGenerator
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
-			markerType="org.rosi.crom.validation.mapping.ui.featuremapping.check.expensive">
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.quickfix.MarkerResolutionGenerator"
+			markerType="org.rosi.crom.validation.mapping.ui.oclmapping.check.expensive">
 			<attribute
 				name="FIXABLE_KEY"
 				value="true">
@@ -370,11 +370,11 @@
 	<!-- Rename Refactoring -->
 	<extension point="org.eclipse.ui.handlers">
 		<handler 
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.DefaultRenameElementHandler"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.DefaultRenameElementHandler"
 			commandId="org.eclipse.xtext.ui.refactoring.RenameElement">
 			<activeWhen>
 				<reference
-					definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+					definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 				</reference>
 			</activeWhen>
 		</handler>
@@ -386,7 +386,7 @@
 				style="push">
 				<visibleWhen checkEnabled="false">
 					<reference
-						definitionId="org.rosi.crom.validation.mapping.FeatureMapping.Editor.opened">
+						definitionId="org.rosi.crom.validation.mapping.OclMapping.Editor.opened">
 					</reference>
 				</visibleWhen>
 			</command>
@@ -394,40 +394,40 @@
 	</extension>
 	<extension point="org.eclipse.ui.preferencePages">
 		<page
-			category="org.rosi.crom.validation.mapping.FeatureMapping"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.RefactoringPreferencePage"
-			id="org.rosi.crom.validation.mapping.FeatureMapping.refactoring"
+			category="org.rosi.crom.validation.mapping.OclMapping"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.refactoring.ui.RefactoringPreferencePage"
+			id="org.rosi.crom.validation.mapping.OclMapping.refactoring"
 			name="Refactoring">
-			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_FeatureMapping"/>
+			<keywordReference id="org.rosi.crom.validation.mapping.ui.keyword_OclMapping"/>
 		</page>
 	</extension>
 	<extension point="org.eclipse.compare.contentViewers">
-		<viewer id="org.rosi.crom.validation.mapping.FeatureMapping.compare.contentViewers"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
-			extensions="featuremapping">
+		<viewer id="org.rosi.crom.validation.mapping.OclMapping.compare.contentViewers"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
+			extensions="oclmapping">
 		</viewer>
 		<contentTypeBinding
-			contentTypeId="org.rosi.crom.validation.mapping.FeatureMapping.contenttype"
-			contentViewerId="org.rosi.crom.validation.mapping.FeatureMapping.compare.contentViewers" />
+			contentTypeId="org.rosi.crom.validation.mapping.OclMapping.contenttype"
+			contentViewerId="org.rosi.crom.validation.mapping.OclMapping.compare.contentViewers" />
 	</extension>
 	<extension point="org.eclipse.compare.contentMergeViewers">
-		<viewer id="org.rosi.crom.validation.mapping.FeatureMapping.compare.contentMergeViewers"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
-			extensions="featuremapping" label="FeatureMapping Compare">
+		<viewer id="org.rosi.crom.validation.mapping.OclMapping.compare.contentMergeViewers"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.compare.InjectableViewerCreator"
+			extensions="oclmapping" label="OclMapping Compare">
 		</viewer>
 		<contentTypeBinding
-			contentTypeId="org.rosi.crom.validation.mapping.FeatureMapping.contenttype"
-			contentMergeViewerId="org.rosi.crom.validation.mapping.FeatureMapping.compare.contentMergeViewers" />
+			contentTypeId="org.rosi.crom.validation.mapping.OclMapping.contenttype"
+			contentMergeViewerId="org.rosi.crom.validation.mapping.OclMapping.compare.contentMergeViewers" />
 	</extension>
 	<extension point="org.eclipse.ui.editors.documentProviders">
-		<provider id="org.rosi.crom.validation.mapping.FeatureMapping.editors.documentProviders"
-			class="org.rosi.crom.validation.mapping.ui.FeatureMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.model.XtextDocumentProvider"
-			extensions="featuremapping">
+		<provider id="org.rosi.crom.validation.mapping.OclMapping.editors.documentProviders"
+			class="org.rosi.crom.validation.mapping.ui.OclMappingExecutableExtensionFactory:org.eclipse.xtext.ui.editor.model.XtextDocumentProvider"
+			extensions="oclmapping">
 		</provider>
 	</extension>
 	<extension point="org.eclipse.team.core.fileTypes">
 		<fileTypes
-			extension="featuremapping"
+			extension="oclmapping"
 			type="text">
 		</fileTypes>
 	</extension>
