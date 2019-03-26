@@ -85,8 +85,7 @@ public class ValidateAction implements IObjectActionDelegate {
 				Job job = new WorkspaceJob("Validating CROM...") {
 					public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {					
 						ConfigGenerator configGenerator = new ConfigGenerator(shell, p, resourceSet, resourceCROM);
-						// TODO: ACTIVATE AGAIN
-						// configGenerator.generate(false);
+						configGenerator.generate(false);
 
 						CROMValidator validator = new CROMValidator(shell);
 						validator.validate(p, resourceCROM);
