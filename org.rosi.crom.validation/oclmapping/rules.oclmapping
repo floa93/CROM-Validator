@@ -9,7 +9,6 @@ feature true
 	invariant ConstraintDefinedInCompartment	
 	invariant ConstraintRolesInSameCompartment
 
-	
 //RoleType
 feature not(Role_Properties)
 	invariant RolePropertiesNotAllowed

@@ -205,6 +205,18 @@ transitiveClosureRole(self.prec_rt)
 
 
 --Constraints
+-- präsentation
+--\forall rt \in RT \exists! ct \in CT \exists t \in T : (t,ct,rt) \in \text{fills}
+inv a_7_1:
+self.rt->forAll(
+	rt | self.ct->one(
+		ct| self.t->exists(
+			t | self.fills->includes(Tuple{t = t,ct = ct,rt = rt}
+			)
+		)
+	)
+)
+
 --Universal
 
 inv CompartmentContainsRoles:
@@ -301,7 +313,6 @@ customError(
 	failedRoleTypes->isEmpty(),
 	'Every RoleType must be filled. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
-
 
 -- durchsuche transitive CT und RT relationen nach Kindern
 inv RoleFilled_Transitive:
@@ -400,6 +411,7 @@ customError(
 )
 
 --Playable
+--Playable.Rolls für die FOlie
 inv RolePlayableByRoleNotAllowed:
 let failedFulfillments : Set(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) = 
 self.fills->select(fills | fills.t.oclIsKindOf(RoleType))

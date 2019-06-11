@@ -91,9 +91,14 @@ public class CompleteOCLParser {
 	
 	public Object evaluate(String constraintName) {
 		ExpressionInOCL expression = getConstraint(constraintName);
-		return evaluate(expression, constraintName);
+		if(expression != null) 
+			return evaluate(expression, constraintName);
+		else
+			return null;
 	}
-		
+	
+	
+	// TODO: Expression.Name instead of constraintName??
 	public Object evaluate(ExpressionInOCL expression, String constraintName) {
 		Object result = oclInstance.evaluate(modelInstance, expression);
 		if(result instanceof TupleValue) {

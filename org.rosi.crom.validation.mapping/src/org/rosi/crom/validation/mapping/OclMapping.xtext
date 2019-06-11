@@ -2,7 +2,6 @@ grammar org.rosi.crom.validation.mapping.OclMapping with org.eclipse.xtext.commo
 
 generate oclMapping "http://www.rosi.org/crom/validation/mapping/OclMapping"
 
-
 Model:
     elements+=(Feature)*;
 	 
@@ -14,28 +13,21 @@ Invariant:
 	 'invariant' name=ID;
 
 Expression:
-    OrExpression 
-;   
+    OrExpression;   
 
 OrExpression returns Expression:
-    AndExpression ({OrExpression.left=current} "or" right=AndExpression)*  
-;   
+    AndExpression ({OrExpression.left=current} 'or' right=AndExpression)*;   
 
 AndExpression returns Expression:
-    NotExpression ({AndExpression.left=current} "and" right=NotExpression)*  
-;
+    NotExpression ({AndExpression.left=current} 'and' right=NotExpression)*;
 
 NotExpression returns Expression:
-	{NotExpression} 'not' operand=NotExpression | PrimaryExpression
-;
+	{NotExpression} 'not' operand=NotExpression | PrimaryExpression;
 	
 
 PrimaryExpression returns Expression:
-    "(" Expression ")" | Literal
-;
+    '(' Expression ')' | Literal;
 
 
 Literal returns Expression:
-    {Literal} value="true" | {Literal} value="false" | {Literal} value=ID
-;
- 
+    {Literal} value='true' | {Literal} value='false' | {Literal} value=ID;

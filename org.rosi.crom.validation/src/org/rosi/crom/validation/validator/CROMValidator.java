@@ -37,7 +37,7 @@ public class CROMValidator{
 	private void alertError(String message) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				MessageDialog.openError(shell, "", message);
+				MessageDialog.openError(shell, "Error", message);
 				
 			}
         });
@@ -46,7 +46,7 @@ public class CROMValidator{
 	private void alertInfo(String message) {
 		Display.getDefault().asyncExec(new Runnable() {
 			public void run() {
-				MessageDialog.openInformation(shell, "", message);
+				MessageDialog.openInformation(shell, "Information", message);
 				
 			}
         });
@@ -134,19 +134,18 @@ public class CROMValidator{
 		//todo: remove, just for easier testing
 		List<String> sortedInvariants = asSortedList(invariants);
 		
-		for(String invariant : sortedInvariants) {
-			ExpressionInOCL constraint = oclParser.getConstraint(invariant);
-			if(constraint != null) {
-				Object result = oclParser.evaluate(constraint, invariant);
+		for(String constraintName : sortedInvariants) {
+			Object result = oclParser.evaluate(constraintName);
+			if(result != null) {
 				if(result instanceof CollectionValue) {
 					CollectionValue setValue = (CollectionValue)result;
-					printf("%s: [%s]%s", invariant, setValue.size().toString(), setValue.getElements().toString());
+					printf("%s: [%s]%s", constraintName, setValue.size().toString(), setValue.getElements().toString());
 				}
 				else
-					printf("%s: %s", invariant, result);
+					printf("%s: %s", constraintName, result);
 			}
 			else {
-				printf("COULD NOT FIND CONSTRAINT %s in OCL", invariant);
+				printf("COULD NOT FIND CONSTRAINT %s in OCL", constraintName);
 			}
 		}
 	}
@@ -168,7 +167,7 @@ public class CROMValidator{
 			
 			String errors = String.join("\n", failedConstraints.values());
 			//run SWT stuff in Display Thread			
-			alertError("CROM is not wellformed. Fix the following errors:\n\n" + errors);
+			alertError("CROM is not wellformed. Fix the following errors in your model:\n\n" + errors);
 		}
 	}
 }
