@@ -55,6 +55,9 @@ public class ErrorClassesTest
 	   //CompartmentContainsRoles
 	   assertTrue(failedConstraints.containsKey("CompartmentContainsRoles"));
 	   
+	   //todo: use hamcrest
+	   assertThat(failedConstraints.containsKey("CompartmentContainsRoles"), is(true));
+	   
 	   String errorCompartmentContainsRoles = failedConstraints.get("CompartmentContainsRoles");
 	   assertThat(errorCompartmentContainsRoles, containsString("Every CompartmentType must define at least one RoleType. Failed for CompartmentType(s):"));
 	   assertThat(errorCompartmentContainsRoles, containsString("CompartmentContainsRoles"));
