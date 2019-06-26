@@ -79,11 +79,10 @@ feature not(Compartment_Behavior)
 	invariant CompartmentBehaviorNotAllowed
 
 feature Compartment_Inheritance
-	invariant a_7_23
 	invariant SubCompartmentContainsRoleTypesOfBaseCompartment
 	invariant SubCompartmentContainsRelationshipsOfBaseCompartment
 	invariant SubCompartmentRelationshipsEqualsBaseCompartmentRelationships
-	//invariant RestrictSubPlayers
+	invariant RestrictSubPlayers
 
 feature not(Compartment_Inheritance)
 	invariant CompartmentInheritanceNotAllowed

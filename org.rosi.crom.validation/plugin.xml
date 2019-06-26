@@ -18,7 +18,7 @@
 	     <action
 	           class="org.rosi.crom.validation.popup.actions.ValidateAction"
 	           id="org.rosi.crom.validation.ValidateAction"
-	           label="Validation"
+	           label="Validate Variant"
 	           menubarPath="org.rosi.crom.validation.menu"
 	           tooltip="Validates the CROM for Well-Formedness">
 	     </action>
