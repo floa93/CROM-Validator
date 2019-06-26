@@ -2,6 +2,9 @@
 ### Introduction
 This plugin is intended to be used with FRaMED 2.0(see https://github.com/Eden-06/FRaMED-2.0)
 
+### Requirements
+Eclipse Photon or newer
+
 ### How to import CROM Validator repository into Eclipse
 1. Select "File" -> "Import" to open the import wizard, select "Projects from Git" and hit "Next>".
 2. Enter https://github.com/floa93/CROM-Validator.git into the URI field and hit "Next>"
