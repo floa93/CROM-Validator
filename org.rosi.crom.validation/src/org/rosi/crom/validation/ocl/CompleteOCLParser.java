@@ -21,6 +21,10 @@ import org.rosi.crom.validation.Utils;
 
 import crom_l1_composed.Crom_l1_composedPackage;
 
+/**
+ * @author Florian Amberg
+ *
+ */
 public class CompleteOCLParser {
 	private OCL oclInstance;
 	private EObject modelInstance;
@@ -33,6 +37,9 @@ public class CompleteOCLParser {
 	private Map<String, String> failedConstraints;
 	
 	
+	/**
+	 * @param modelInstance
+	 */
 	public CompleteOCLParser(EObject modelInstance) {
 		this.modelInstance = modelInstance;
 		
@@ -49,6 +56,9 @@ public class CompleteOCLParser {
 		failedConstraints = new HashMap<String, String>();
 	}
 	
+	/**
+	 * @param urlCompleteOCL
+	 */
 	public void loadFile(URL urlCompleteOCL) {
 		URI uriCompleteOCL = null;
 		//Convert URL to EMF URI
@@ -83,12 +93,20 @@ public class CompleteOCLParser {
 		}
 	}
 	
+	/**
+	 * @param name
+	 * @return
+	 */
 	public ExpressionInOCL getConstraint(String name) {		   
 		if(constraintMap.containsKey(name))
 			return constraintMap.get(name);
 		return null;
 	}
 	
+	/**
+	 * @param constraintName
+	 * @return
+	 */
 	public Object evaluate(String constraintName) {
 		ExpressionInOCL expression = getConstraint(constraintName);
 		if(expression != null) 
@@ -98,7 +116,11 @@ public class CompleteOCLParser {
 	}
 	
 	
-	// TODO: Expression.Name instead of constraintName??
+	/**
+	 * @param expression
+	 * @param constraintName
+	 * @return
+	 */
 	public Object evaluate(ExpressionInOCL expression, String constraintName) {
 		Object result = oclInstance.evaluate(modelInstance, expression);
 		if(result instanceof TupleValue) {
@@ -126,6 +148,9 @@ public class CompleteOCLParser {
 		return result;
 	}
 
+	/**
+	 * @return
+	 */
 	public Map<String, String> getFailedConstraints() {
 		return failedConstraints;
 	}

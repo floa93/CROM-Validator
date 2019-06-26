@@ -27,11 +27,19 @@ import org.rosi.crom.validation.mapping.oclMapping.NotExpression;
 
 import com.google.inject.Injector;
 
+/** Feature Mapping based on Xtext
+ * @author Florian Amberg
+ *
+ */
 public class OCLFeatureMapping {
 	private List<String> featureConfigList;
 	private Set<String> invariantSet;	
 	
 	
+	/**
+	 * @param dslURL
+	 * @param featureConfigList
+	 */
 	public OCLFeatureMapping(URL dslURL, List<String> featureConfigList) {
 		// save features
 		this.featureConfigList = featureConfigList;
@@ -65,6 +73,10 @@ public class OCLFeatureMapping {
 	
 	}
 	
+	/** Checks the validity of the .oclmapping file
+	 * @param resource
+	 * @return
+	 */
 	private List<Issue> validate(Resource resource) {
 		// Validation
 		IResourceValidator validator = ((XtextResource)resource).getResourceServiceProvider().getResourceValidator();
@@ -72,6 +84,9 @@ public class OCLFeatureMapping {
 		return issues;
 	}
 	
+	/** Parses a .oclmapping file
+	 * @param resource
+	 */
 	private void parse(Resource resource) {		
 		Model modelRootElement = (Model) resource.getContents().get(0);
 		
@@ -92,6 +107,11 @@ public class OCLFeatureMapping {
 		}
 	}
 	
+	/** Parses the AST tree
+	 * @param rootExpression
+	 * @param result
+	 * @return
+	 */
 	private boolean parseExpression(Expression rootExpression, boolean result) {
 		if(rootExpression instanceof AndExpression) {
 			AndExpression andExpression = (AndExpression) rootExpression;
@@ -129,6 +149,9 @@ public class OCLFeatureMapping {
 	}	
 	
 	
+	/** Get the appropriate invariant names
+	 * @return
+	 */
 	public Set<String> getInvariants(){
 		return invariantSet;
 	}

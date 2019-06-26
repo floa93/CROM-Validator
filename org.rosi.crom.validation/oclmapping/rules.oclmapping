@@ -8,7 +8,7 @@ feature true
 	invariant RoleFilled
 	invariant ConstraintDefinedInCompartment	
 	invariant ConstraintRolesInSameCompartment
-
+	
 //RoleType
 feature not(Role_Properties)
 	invariant RolePropertiesNotAllowed
@@ -88,8 +88,12 @@ feature Compartment_Inheritance
 feature not(Compartment_Inheritance)
 	invariant CompartmentInheritanceNotAllowed
 	
+feature Contains_Compartments
+	invariant CompartmentContainsCompartmentDistinct
+	
 feature not(Contains_Compartments)
 	invariant CompartmentContainsCompartmentNotAllowed
+	
 	
 //DataType
 feature not(Data_Type_Inheritance)

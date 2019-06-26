@@ -5,6 +5,10 @@ import java.util.Arrays;
 import java.util.List;
 
 
+/** Used to build the configs needed in the ErrorClassTestSuite
+ * @author Florian Amberg
+ *
+ */
 public class ConfigBuilder {
 	   private List<String> config = getConfigListAll(); 
 	
@@ -72,7 +76,10 @@ public class ConfigBuilder {
 	     return config;
 	   }
 	
-	   private List<String> getConfigListAll(){
+	   /** All the configs as a default value
+	 * @return
+	 */
+	private List<String> getConfigListAll(){
 		   return new ArrayList<String>(
 				   Arrays.asList(
 				   "Role_Types",

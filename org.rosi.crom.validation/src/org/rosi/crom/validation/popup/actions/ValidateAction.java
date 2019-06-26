@@ -82,6 +82,7 @@ public class ValidateAction implements IObjectActionDelegate {
 				final Resource resourceCROM = resourceSet.getResource(
 						URI.createURI(p.toString()), true);
 				
+				// Evaluate the given CROM model
 				Job job = new WorkspaceJob("Validating CROM...") {
 					public IStatus runInWorkspace(IProgressMonitor monitor) throws CoreException {	
 						ConfigGenerator configGenerator = new ConfigGenerator(shell, p, resourceSet, resourceCROM);

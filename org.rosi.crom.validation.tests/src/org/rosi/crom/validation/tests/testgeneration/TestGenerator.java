@@ -52,6 +52,8 @@ import de.ovgu.featureide.fm.core.io.UnsupportedModelException;
 /**
  * @author Kevin Kassin This generates test cases in the folder "Generated"
  *         based on baseTest.xmi
+ *         
+ * @author Florian Amberg Edited to support the needs of evaluating a CROM file
  */
 public class TestGenerator {
 
@@ -807,7 +809,7 @@ public class TestGenerator {
 
 	
 	/**
-	 * deletes all role groups in a given compartment type
+	 * Deletes all role groups in a given compartment type
 	 * 
 	 * @param compartment
 	 * @param fulfillments 

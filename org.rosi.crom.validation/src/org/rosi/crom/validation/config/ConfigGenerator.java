@@ -21,6 +21,10 @@ import org.framed.iorm.featuremodel.FRaMEDFeature;
 
 import crom_l1_composed.Model;
 
+/** Generate a .cfg file based on a IORM model, uses the standard config if there is no IORM model
+ * @author Florian Amberg
+ *
+ */
 public class ConfigGenerator {
 
 	/**
@@ -57,9 +61,8 @@ public class ConfigGenerator {
 		this.cromResource = cromResource;
 	}
 	
-	//use standard config if iorm does not exist
-	/**
-	 * @param askOverride
+	/** 
+	 * @param askOverride 
 	 */
 	public void generate(boolean askOverride) {
 		try {

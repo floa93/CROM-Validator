@@ -1,32 +1,24 @@
+-- Specifying the corresponding CROM Ecore model
 import 'platform:/resource/org.rosi.crom.metamodel/model/crom_l1_composed.ecore'
-
 package crom_l1_composed
-
 context Model
 
---then abstractRole.oclAsType(RoleGroup).elements->exists(e | atomExists(e.oclAsType(AbstractRole), roleType))
+-- ###GLOBAL VARIABLES###
+-- Basic formal sets
+def: nt : Set(NaturalType) = self.elements->selectByKind(NaturalType)
 
--- Global Variables
-def: 
-nt : Set(NaturalType) = self.elements->selectByKind(NaturalType)
+def: ct : Set(CompartmentType) = CompartmentType.allInstances()
 
-def: 
-ct : Set(CompartmentType) = CompartmentType.allInstances()
+def: rt : Set(RoleType) = RoleType.allInstances()
 
-def:
-rt : Set(RoleType) = RoleType.allInstances()
+def: dt : Set(DataType) = DataType.allInstances()
 
-def:
-dt : Set(DataType) = DataType.allInstances()
+def: t : Set(Type) = self.nt->union(self.ct->union(self.rt->union(self.dt)))
 
-def:
-t : Set(Type) = self.nt->union(self.ct->union(self.rt->union(self.dt)))
+def: rst : Set(Relationship) = Relationship.allInstances()
 
-def:
-rst : Set(Relationship) = Relationship.allInstances()
-
-def:
-rel :
+-- relations and partial functions
+def: rel :
 Map(
 	Tuple(rst : Relationship, ct : CompartmentType),
 	Tuple(rt1 : RoleType, rt2 : RoleType)
@@ -39,8 +31,7 @@ self.rst->iterate(rst : Relationship; rels : Map(Tuple(rst : Relationship, ct : 
 )
 
 
-def: 
-fills : 
+def: fills : 
 Set(
 	Tuple(
 		t : Type,
@@ -58,8 +49,7 @@ Fulfillment.allInstances()->iterate(fulfillment : Fulfillment; fills : Set(Tuple
 	)
 )
 
-def:
-rolec : 
+def: rolec : 
 Map(
 	CompartmentType,
 	Sequence(
@@ -71,11 +61,13 @@ Map(
 ) = 
 Part.allInstances()->iterate(part : Part; rolec : Map(CompartmentType,Sequence(Tuple(card : Tuple(lower : ecore::EInt, upper : ecore::EInt),rg : AbstractRole))) = Map{} | 
 	let ct : CompartmentType = part.whole in
+	-- As the keys contain Sequences, new values need to be inserted if the Sequence exist
+	-- If not create a new Sequence
 	if rolec->includes(ct)
 	then
 		rolec->including(
 			ct,
-			--OCL iterate Eigenheit
+			--OCL iterate quirk
 			rolec->at(ct)->append(
 					Tuple{
 					card=Tuple{
@@ -100,6 +92,50 @@ Part.allInstances()->iterate(part : Part; rolec : Map(CompartmentType,Sequence(T
 			}
 		)	
 	endif
+)
+
+def:
+riehle : 
+Map(
+	CompartmentType,
+	Sequence(
+		Tuple(
+			rt1 : AbstractRole,
+			constraint : String,
+			rt2 : AbstractRole
+		)
+	)			
+) = 
+RoleConstraint.allInstances()->iterate(roleConstraint : RoleConstraint; riehle : Map(CompartmentType, Sequence( Tuple( rt1 : AbstractRole, constraint : String, rt2 : AbstractRole))) = Map{} | 
+	let ct : CompartmentType = getCompartmentType(roleConstraint) in
+	let type : String = getRoleConstraintType(roleConstraint) in 
+	-- As the keys contain Sequences, new values need to be inserted if the Sequence exist
+	-- If not create a new Sequence
+	if riehle->includes(ct)
+	then
+		riehle->including(
+			ct,
+			-- OCL iterate quirk
+			riehle->at(ct)->append(
+				Tuple{
+					rt1=roleConstraint.first,
+					constraint=type,
+					rt2=roleConstraint.second
+				}
+			)
+		)
+	else
+	riehle->including(
+			ct,
+			Sequence{
+				Tuple{
+					rt1=roleConstraint.first,
+					constraint=type,
+					rt2=roleConstraint.second
+				}
+			}
+		)
+	endif	
 )
 
 def: 
@@ -169,7 +205,25 @@ InterRelationshipConstraint.allInstances()->iterate(interRel : InterRelationship
 	)
 )
 
--- Inheritance 
+
+def: 
+contains : Set(
+	Tuple(
+		ct1 : CompartmentType,
+		ct2 : CompartmentType
+	)
+) =
+self.ct.contains->iterate(inner_ct : CompartmentType; contains : Set(Tuple(ct1 : CompartmentType, ct2 : CompartmentType)) = Set{} |  
+	contains->including(
+		Tuple{
+			ct1=getCompartmentType(inner_ct),
+			ct2=inner_ct
+		}
+	)
+)
+
+
+-- inheritance sets
 def: 
 prec_ct : Set(CompartmentInheritance) =
 CompartmentInheritance.allInstances()
@@ -195,30 +249,16 @@ def:
 preceq_nt : Set(NaturalInheritance) =
 transitiveClosureNatural(self.prec_nt)->union(reflexiveClosureNatural(self.nt))
 
-def: 
-prec_ct2 : Set(CompartmentInheritance) =
-CompartmentInheritance.allInstances()
 
 def:
 trans_rt : Set(RoleInheritance) =
 transitiveClosureRole(self.prec_rt)
 
 
---Constraints
--- präsentation
---\forall rt \in RT \exists! ct \in CT \exists t \in T : (t,ct,rt) \in \text{fills}
-inv a_7_1:
-self.rt->forAll(
-	rt | self.ct->one(
-		ct| self.t->exists(
-			t | self.fills->includes(Tuple{t = t,ct = ct,rt = rt}
-			)
-		)
-	)
-)
+-- ###CONSTRAINTS###
+-- Universal constraints
 
---Universal
-
+-- Does each Compartment contains roles?
 inv CompartmentContainsRoles:
 let failedCompartmentTypes : Set(CompartmentType) = 
 self.ct->select(
@@ -230,6 +270,7 @@ customError(
 	'Every CompartmentType must define at least one RoleType. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
+-- Does each Compartment contains filled roles?
 inv CompartmentContainsFilledRoles:
 let failedCompartmentTypes : Set(CompartmentType) = 
 self.ct->select(
@@ -243,26 +284,7 @@ customError(
 	'RoleTypes in Compartments need to be filled. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
-
-inv CompartmentContainsFilledRoles_Transitive:
-let failedCompartmentTypes : Set(CompartmentType) = 
-self.ct->select(
-			ct | not ct.parts->isEmpty() 
-			 and not self.fills->exists(f | f.ct = ct)
-			 and not self.preceq_ct->exists(preceq_ct | 
-			 	if preceq_ct.super = ct then
-			 	self.fills->exists(f | f.ct = preceq_ct.sub)
-			 	else false endif
-			 )
-		) 
-in
-customError(
-	failedCompartmentTypes->isEmpty(),
-	'RoleTypes in Compartments need to be filled. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
-)
-
-
-
+-- Is each Relationship defined in a Compartment?
 inv RelationshipDefinedInCompartment:
 let failedRelationshipType : Set(Relationship) = 
 self.rst->select(
@@ -276,6 +298,7 @@ customError(
 	'Every Relationship needs to be defined in a CompartmentType. Failed for Relationship(s): ' + collectionToString(failedRelationshipType)
 )
 
+-- Is each member of a Relationship distinct?
 inv RelationshipRolesAreDistinct:
 let failedRelationships : Bag(Tuple(rt1:RoleType, rt2:RoleType)) = 
 self.rel.values()->select(
@@ -288,6 +311,7 @@ customError(
 	+ collectionToString(failedRelationships)
 )
 
+-- Are the members of a Relationship in the same Compartment?
 inv RelationshipRolesInSameCompartment:
 let failedRelationships : Bag(Tuple(rt1:RoleType, rt2:RoleType)) = 
 self.rel.values()->select(
@@ -300,7 +324,7 @@ customError(
 	+ collectionToString(failedRelationships)
 )
 
-
+-- Is every Role filled?
 inv RoleFilled:
 let failedRoleTypes : Set(RoleType) = 
 self.rt->select(
@@ -314,30 +338,7 @@ customError(
 	'Every RoleType must be filled. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
--- durchsuche transitive CT und RT relationen nach Kindern
-inv RoleFilled_Transitive:
-let failedRoleTypes : Set(RoleType) = 
-self.rt->select(
-			rt | not self.fills->exists(
-				f | atomExists(f.rt, rt)
-			) -- AND CT INHERITANCE: if the sub compartment's role type is fulfilled
-			 and not self.preceq_ct->exists(
-				preceq_ct | if preceq_ct.super = getCompartmentType(rt) and preceq_ct.super <> preceq_ct.sub 
-							then atoms(preceq_ct.sub.parts)->includes(rt.name)
-							else false endif
-			)-- AND RT INHERITANCE: if the sub role type is fulfilled -> OK
-			 and not self.trans_rt->exists(
-				trans_rt |  if trans_rt.super.name = rt.name then 
-							self.fills->exists(f | atomExists(f.rt, trans_rt.sub)) 
-							else false endif
-			)
-		)
-in
-customError(
-	failedRoleTypes->isEmpty(),
-	'!!!Every RoleType must be filled. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
-)
-
+-- Is every Constraint defined in a Compartment?
 inv ConstraintDefinedInCompartment:
 let failedRoleConstraints : Set(RoleConstraint) = 
 RoleConstraint.allInstances()->select(
@@ -351,6 +352,7 @@ customError(
 )
 
 
+-- Is every member of a Constraint in a Compartment?
 inv ConstraintRolesInSameCompartment:
 let failedRoleConstraints : Set(RoleConstraint) = 
 RoleConstraint.allInstances()->select(
@@ -368,9 +370,9 @@ customError(
 	+ collectionToString(failedRoleConstraints)
 )
 
---Dependent Features
+-- Dependent Features
 
--- RoleType
+-- Check that no Role properties exist
 inv RolePropertiesNotAllowed:
 let failedRoleTypes : Set(RoleType) = 
 self.rt->select(rt | not rt.attributes->isEmpty())
@@ -380,6 +382,7 @@ customError(
 	'RoleTypes can not define attributes. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
+-- Check that no Role methods exist
 inv RoleBehaviorNotAllowed:
 let failedRoleTypes : Set(RoleType) = 
 self.rt->select(rt | not rt.operations->isEmpty())
@@ -389,8 +392,7 @@ customError(
 	'RoleTypes can not define operations. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
--- TODO: error test case
-
+-- Check that a Role is defined in exactly one Compartment
 inv RoleDefinedInExactlyOneCompartment:
 let failedRoleTypes : Set(RoleType) = 
 self.rt->select(
@@ -404,14 +406,16 @@ customError(
 	'Every RoleType must be defined in exactly one CompartmentType. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
+-- Check that Role inheritances do not exist
 inv RoleInheritanceNotAllowed:
 customError(
 	self.prec_rt->isEmpty(),
 	'RoleInheritance is not allowed. Failed for: ' + collectionToString(self.prec_rt)
 )
 
---Playable
---Playable.Rolls für die FOlie
+-- Playable
+
+-- Check that Role players do not exist
 inv RolePlayableByRoleNotAllowed:
 let failedFulfillments : Set(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) = 
 self.fills->select(fills | fills.t.oclIsKindOf(RoleType))
@@ -421,6 +425,7 @@ customError(
 	'RoleTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 
+-- Check that Compartment players do not exist
 inv RolePlayableByCompartmentNotAllowed:
 let failedFulfillments : Set(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) = 
 self.fills->select(fills | fills.t.oclIsKindOf(CompartmentType))
@@ -430,6 +435,7 @@ customError(
 	'CompartmentTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 	
+-- Check that Data players do not exist
 inv RolePlayableByDataNotAllowed:
 let failedFulfillments : Set(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) = 
 self.fills->select(fills | fills.t.oclIsKindOf(DataType))
@@ -439,36 +445,59 @@ customError(
 	'DataTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 	
---RoleConstraints
+-- RoleConstraints
+
+-- Check that Role implications do not exist
 inv RoleImplicationNotAllowed:
-let roleConstraint : Set(RoleImplication) = RoleImplication.allInstances() in
+let failedRoleImplications : Bag(Tuple(constraint: String, rt1:AbstractRole, rt2:AbstractRole)) = 
+self.riehle.values()->flatten()->select(
+	riehle_val | riehle_val.constraint->exists(
+		constraint | constraint = 'Implication'
+	)
+)
+in
 customError(
-	roleConstraint->isEmpty(),
-	'Role implications are not allowed. Failed for RoleImplication(s): ' + collectionToString(roleConstraint) 
+	failedRoleImplications->isEmpty(),
+	'Role implications are not allowed. Failed for RoleImplication(s): ' + roleConstraintsCollectionToString(failedRoleImplications) 
 )
 
+-- Check that Role prohibitons do not exist
 inv RoleProhibitionNotAllowed:
-let roleConstraint : Set(RoleProhibition) = RoleProhibition.allInstances() in
+let failedRoleProhibitions : Bag(Tuple(constraint: String, rt1:AbstractRole, rt2:AbstractRole)) = 
+self.riehle.values()->flatten()->select(
+	riehle_val | riehle_val.constraint->exists(
+		constraint | constraint = 'Prohibition'
+	)
+)
+in
 customError(
-	roleConstraint->isEmpty(),
-	'Role prohibitions are not allowed. Failed for RoleProhibition(s): ' + collectionToString(roleConstraint) 
+	failedRoleProhibitions->isEmpty(),
+	'Role prohibitions are not allowed. Failed for RoleProhibition(s): ' + roleConstraintsCollectionToString(failedRoleProhibitions) 
 )
 
+-- Check that Role equivalences do not exist
 inv RoleEquivalenceNotAllowed:
-let roleConstraint : Set(RoleEquivalence) = RoleEquivalence.allInstances() in
+let failedRoleEquivalences : Bag(Tuple(constraint: String, rt1:AbstractRole, rt2:AbstractRole)) = 
+self.riehle.values()->flatten()->select(
+	riehle_val | riehle_val.constraint->exists(
+		constraint | constraint = 'Equivalence'
+	)
+)
+in
 customError(
-	roleConstraint->isEmpty(),
-	'Role equivalences are not allowed. Failed for RoleEquivalence(s): ' + collectionToString(roleConstraint) 
+	failedRoleEquivalences->isEmpty(),
+	'Role equivalences are not allowed. Failed for RoleEquivalence(s): ' + roleConstraintsCollectionToString(failedRoleEquivalences) 
 )
 
+-- Check that Role groups do not exist
 inv RoleGroupNotAllowed:
 let roleGroups : Set(RoleGroup) = RoleGroup.allInstances() in
 customError(
-	--self.ct->forAll(ct | not ct.parts->exists(part | part.oclIsKindOf(RoleGroup))),
 	roleGroups->isEmpty(),
 	'Role groups are not allowed: ' + collectionToString(roleGroups) 
 )
 
+-- Check that Role cardinalities do not exist
 inv RoleOccurrenceConstraintNotAllowed:
 let roleOccurences : Bag(Part[*|1]) = self.ct.parts->select(part | part.lower <> 0 or part.upper <> -1)
 in 
@@ -477,17 +506,19 @@ customError(
 	'Occurence constraints are not allowed: ' + collectionToString(roleOccurences)
 )
 
---Relationships
+-- Relationships
+
+-- Check that Relationships have cardinalities
 inv RelationshipHasCardinality:
 let failedCards : Set(Tuple(rst:Relationship, ct:CompartmentType)) =
 self.card.keys()->select(card | not self.rel->includes(card)) 
 in
 customError(
-	--self.rel->includesAll(self.card.keys()),
 	failedCards->isEmpty(),
 	'Cardinalities need to be defined between Relationships. Found invalid Cardinalities for: ' + cardCollectionToString(failedCards)
 )
 
+-- Check that Relationship do not have cardinalities(only defaults)
 inv RelationshipCardinalityNotAllowed:
 let failedCards : Set(Tuple(rst:Relationship, ct:CompartmentType)) = 
 self.card.keys()->select(
@@ -503,6 +534,7 @@ customError(
 	'Relationship cardinalities are not allowed. Failed for Relationship(s): ' + cardCollectionToString(failedCards)
 )
 
+-- Check that IntraRelationshipConstraints have valid members
 inv IntraRelationshipContainsValidRelationship:
 let failedIntraRels : Set(Tuple(c:String, ct:CompartmentType, rst:Relationship)) =
 self.intra->select(
@@ -514,6 +546,7 @@ customError(
 	'Every Intra relationship needs to contain a valid Relationship. Failed for IntraRelationship(s): ' + intraCollectionToString(failedIntraRels)
 )
 
+-- Check that IntraRelationshipConstraints do not exist
 inv IntraRelationshipConstraintsNotAllowed:
 let failedIntraRels : Set(Tuple(c:String, ct:CompartmentType, rst:Relationship)) = self.intra in
 customError(
@@ -521,6 +554,7 @@ customError(
 	'Intra relationship constraints are not allowed. Failed for IntraRelationship(s): '  + intraCollectionToString(failedIntraRels)
 )
 
+-- Check that InterRelationshipConstraints members are distinct
 inv InterRelationshipsAreDistinct:
 let failedInterRels : Set(Tuple(ct:CompartmentType, first:Relationship, second:Relationship)) =
 self.inter.keys()->select(
@@ -533,6 +567,7 @@ customError(
 	+ interCollectionToString(failedInterRels)
 )
 
+-- Check that InterRelationshipConstraints members are in the same Compartment
 inv InterRelationshipInSameCompartment:
 let failedInterRels : Set(Tuple(ct:CompartmentType, first:Relationship, second:Relationship)) =
 self.inter.keys()->select(
@@ -545,6 +580,7 @@ customError(
 	+ interCollectionToString(failedInterRels)
 )
 
+-- Check that InterRelationshipConstraints do not exist
 inv InterRelationshipConstraintsNotAllowed:
 let failedInterRels : Set(Tuple(ct:CompartmentType, first:Relationship, second:Relationship)) = self.inter.keys() in
 customError(
@@ -553,8 +589,9 @@ customError(
 	+ interCollectionToString(failedInterRels)
 )
 
---CompartmentTypes
+-- CompartmentTypes
 
+-- Check that Compartment properties do not exist
 inv CompartmentPropertiesNotAllowed:
 let failedCompartmentTypes : Set(CompartmentType) = 
 self.ct->select(ct | not ct.attributes->isEmpty())
@@ -564,6 +601,7 @@ customError(
 	'CompartmentTypes can not define attributes. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
+-- Check that Compartment methods do not exist
 inv CompartmentBehaviorNotAllowed:
 let failedCompartmentTypes : Set(CompartmentType) = 
 self.ct->select(ct | not ct.operations->isEmpty())
@@ -573,6 +611,7 @@ customError(
 	'CompartmentTypes can not define operations. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
+-- Check that Sub-Compartments contain the Roles of the Super-Compartment
 inv SubCompartmentContainsRoleTypesOfBaseCompartment:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 self.preceq_ct->select(
@@ -584,7 +623,7 @@ in customError(
 	+ collectionToString(failedCompartmentInheritances)
 )
 
-
+-- Check that Sub-Compartments contain the Relationships of the Super-Compartment
 inv SubCompartmentContainsRelationshipsOfBaseCompartment:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 self.preceq_ct->select(
@@ -599,7 +638,7 @@ in customError(
 	+ collectionToString(failedCompartmentInheritances)
 )
 
-
+-- Check that Sub-Compartment-Relationships contain the members of the Super-Compartment-Relationships
 inv SubCompartmentRelationshipsEqualsBaseCompartmentRelationships:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 self.preceq_ct->select(
@@ -618,20 +657,13 @@ in customError(
 	+ collectionToString(failedCompartmentInheritances)
 )
 
+-- Restrict the sub players when inheriting
 inv RestrictSubPlayers:
---\\forall (ct_1,ct_2) \\in \\preceq_{CT} \\forall rt \\in \\text{parts}(ct_2)
---\\forall (s,ct_1,rt) \\in \\text{fills} \\exists (t,ct_2,rt) \\in \\text{fills} : s \\preceq_{T} t
--- return all(
---            any((s, t) in crom.preceq_t() for t, ct, rt_t in crom.fills if ct == ct_2 and rt_t == rt) \          
---           for ct_1, ct_2 in crom.preceq_ct() 
---			 for rt in crom.parts(ct_2) 
- --          for s, ct_s, rt_s in crom.fills if rt_s == rt and ct_s == ct_1)
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 self.preceq_ct->select(
 	preceq_ct | not preceq_ct.super.parts->forAll(
 		part_rt | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.sub)->forAll(
 			fulfillment_sub | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.super)->exists(
-				--Statt preceq_nt eigentlich preceq_t, also reflexive transitive Huelle ueber natuerliche und Compartment Vererbungs Beziehungen
 				fulfillment_super | self.preceq_nt->includes(
 					NaturalInheritance{
 						super=fulfillment_super.t,
@@ -655,31 +687,44 @@ in customError(
 	+ collectionToString(failedCompartmentInheritances)
 )
 
+-- Check that Compartment inheritances do not exist
 inv CompartmentInheritanceNotAllowed:
 customError(
 	self.prec_ct->isEmpty(),
 	'CompartmentInheritance is not allowed. Failed for: ' + collectionToString(self.prec_ct)
 )
 
-
-inv CompartmentContainsCompartmentNotAllowed:
-let failedCompartmentTypes : Set(CompartmentType) = 
-self.ct->select(ct | not ct.contains->isEmpty())
+-- Check that Inner-Compartments are distinct to the Container-Compartment
+inv CompartmentContainsCompartmentDistinct:
+let failedContains : Set(Tuple(ct1:CompartmentType, ct2:CompartmentType)) =
+self.contains->select(contains | 
+	contains.ct1.name = contains.ct2.name
+)
 in
 customError(
-	failedCompartmentTypes->isEmpty(),
-	'Compartments can not contain other Compartments. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
+	failedContains->isEmpty(),
+	'Inner Compartments must be distinct from the container Compartment. Failed for CompartmentType(s): ' + containsCollectionToString(failedContains)
+)
+
+-- Check that Inner-Compartments do not exist
+inv CompartmentContainsCompartmentNotAllowed:
+customError(
+	self.contains->isEmpty(),
+	'Compartments can not contain other Compartments. Failed for CompartmentType(s): ' + containsCollectionToString(self.contains)
 )
 
 
---Natural Types
+-- Natural Types
+
+-- Check that Natural inheritances do not exist
 inv NaturalInheritanceNotAllowed:
 customError(
 	self.prec_nt->isEmpty(),
 	'NaturalInheritance is not allowed. Failed for: ' + collectionToString(self.prec_nt)
 )
 
---Data Types
+-- Data Types
+-- Check that Data inheritances do not exist
 inv DataTypeInheritanceNotAllowed:
 customError(
 	self.prec_dt->isEmpty(),
@@ -687,7 +732,10 @@ customError(
 )
 
 
--- calculates transitive closure recursive for RoleInheritance
+-- ###UTIL###
+-- Util methods to calculate the transitive and reflexive closures
+
+-- calculates transitive closure recursivly for RoleInheritance
 def:
 transitiveClosureRole(closure : Set(RoleInheritance)):
 Set(RoleInheritance) = 
@@ -702,7 +750,6 @@ endif
 def: 
 newRelationsRole(closure : Set(RoleInheritance)):  
 Set(RoleInheritance) = 
---todo:Optimize
 closure->iterate(x_y:RoleInheritance;new_relations:Set(RoleInheritance) = Set{} |
 	closure->iterate(q_w:RoleInheritance;tmp:Set(RoleInheritance) = Set{} |
 		if x_y.sub = q_w.super then
@@ -719,7 +766,7 @@ closure->iterate(x_y:RoleInheritance;new_relations:Set(RoleInheritance) = Set{} 
 	)
 )
 
--- calculates transitive closure recursive for CompartmentInheritance
+-- calculates transitive closure recursivly for CompartmentInheritance
 def:
 transitiveClosureCompartment(closure : Set(CompartmentInheritance)):
 Set(CompartmentInheritance) = 
@@ -734,7 +781,6 @@ endif
 def: 
 newRelationsCompartment(closure : Set(CompartmentInheritance)):  
 Set(CompartmentInheritance) = 
---todo:Optimize
 closure->iterate(x_y:CompartmentInheritance;new_relations:Set(CompartmentInheritance) = Set{} |
 	closure->iterate(q_w:CompartmentInheritance;tmp:Set(CompartmentInheritance) = Set{} |
 		if x_y.sub = q_w.super then
@@ -764,7 +810,7 @@ closure->iterate(element : CompartmentType;tuple : Set(CompartmentInheritance) =
 )
 
 
--- calculates transitive closure recursive for NaturalInheritance
+-- calculates transitive closure recursivly for NaturalInheritance
 def:
 transitiveClosureNatural(closure : Set(NaturalInheritance)):
 Set(NaturalInheritance) = 
@@ -779,7 +825,6 @@ endif
 def: 
 newRelationsNatural(closure : Set(NaturalInheritance)):  
 Set(NaturalInheritance) = 
---todo:Optimize
 closure->iterate(x_y:NaturalInheritance;new_relations:Set(NaturalInheritance) = Set{} |
 	closure->iterate(q_w:NaturalInheritance;tmp:Set(NaturalInheritance) = Set{} |
 		if x_y.sub = q_w.super then
@@ -808,10 +853,20 @@ closure->iterate(element : NaturalType;tuple : Set(NaturalInheritance) = Set{} |
 	)
 )
 
+-- Other Helper Methods
 
---Helper methods
+-- creates a rich invariant, specified in https://wiki.eclipse.org/OCL/New_and_Noteworthy/Luna
+def: 
+customError(status : Boolean, message : String) :  Tuple(message:String, status:Boolean) =
+Tuple{
+	status : Boolean = status,
+	message : String = message
+	-- ,severity : Integer = -1
+}
 
---checks if r is a RoleType or a RoleGroup and returns the CompartmentType, which contains r
+
+-- checks if r is a RoleType or a RoleGroup and returns the CompartmentType, which contains r
+-- +Different overloaded methods for several types
 def: getCompartmentType(r : Relation) : CompartmentType = 
 if r.oclContainer().oclIsKindOf(CompartmentType)
 then r.oclContainer().oclAsType(CompartmentType)
@@ -819,7 +874,7 @@ else null
 endif
 
 def: getCompartmentType(r : AbstractRole) : CompartmentType =
---if no RT not defined in CT
+-- if no RT not defined in CT
 if r.oclContainer().oclIsKindOf(OclVoid) then CompartmentType{name=null}
 elseif r.oclContainer().oclIsKindOf(RoleGroup) then getCompartmentType(r.oclContainer().oclAsType(RoleGroup))
 elseif r.oclContainer().oclIsKindOf(Part) then getCompartmentType(r.oclContainer().oclAsType(Part))
@@ -831,32 +886,36 @@ if p.oclContainer().oclIsKindOf(Part) then getCompartmentType(p.oclContainer().o
 else p.oclContainer.oclAsType(CompartmentType)
 endif
 
---recursive check if a RoleType exists in an AbstractRole(Rolegroup or RoleType)
+def: getCompartmentType(ct : CompartmentType) : CompartmentType = 
+ct.oclContainer.oclAsType(CompartmentType)
+
+-- recursive check if a RoleType exists in an AbstractRole(Rolegroup or RoleType)
 def: atomExists(abstractRole : AbstractRole, roleType: RoleType) : Boolean =
 if abstractRole.oclIsKindOf(RoleGroup)
 then abstractRole.oclAsType(RoleGroup).elements->exists(e | atomExists(e.oclAsType(AbstractRole), roleType))
 else abstractRole = roleType
 endif
 
---checks if RoleType exists in Collection(AbstractRole)
+-- checks if RoleType exists in Collection(AbstractRole)
 def:
 includesRoleType(abstractRoleBag : Collection(AbstractRole), roleType: RoleType) : Boolean =
 abstractRoleBag->exists(abstractRole | atomExists(abstractRole, roleType))
 
--- collects all names of all RoleTypes recursive
+-- collects all names of all RoleTypes recursively
 def: atoms(parts: Set(Part)) : Set(String) =
 parts.role->iterate(abstractRole: AbstractRole; roleNames : Set(String) = Set{} |
 	roleNames->union(atoms(abstractRole))
 )
 
+-- collects all names in a AbstractRole recursively
 def: atoms(abstractRole : AbstractRole) : Set(String) =
-let roleNames : Set(String) = Set{}
-in
+let roleNames : Set(String) = Set{} in
 if abstractRole.oclIsKindOf(RoleGroup)
 then roleNames->union(atoms(abstractRole.oclAsType(RoleGroup)))
 else roleNames->including(atoms(abstractRole.oclAsType(RoleType)))
 endif
 
+-- collects all names in a RoleGroup recursively
 def: atoms(roleGroup : RoleGroup) : Set(String) =
 roleGroup.elements->iterate(roleGroupElement : RoleGroupElement; roleNames : Set(String) = Set{} |
 	if roleGroupElement.oclIsKindOf(RoleGroup)
@@ -865,20 +924,19 @@ roleGroup.elements->iterate(roleGroupElement : RoleGroupElement; roleNames : Set
 	endif
 )
 
+-- collects all names in a RoleType
 def: atoms(roleType : RoleType) : String =
 roleType.name
 
+-- classify a RoleConstraint as a String to construct the riehle Map
+def: getRoleConstraintType(constraint : RoleConstraint) : String = 
+if constraint.oclIsKindOf(RoleEquivalence) then 'Equivalence'
+elseif constraint.oclIsKindOf(RoleImplication) then 'Implication'
+elseif constraint.oclIsKindOf(RoleProhibition) then 'Prohibition'
+else '' 
+endif
 
---creates a rich invariant, specified in https://wiki.eclipse.org/OCL/New_and_Noteworthy/Luna
-def: 
-customError(status : Boolean, message : String) :  Tuple(message:String, status:Boolean) =
-Tuple{
-	status : Boolean = status,
-	message : String = message
-	--,severity : Integer = -1
-}
-
---converts Collections to a concatenated string
+-- converts Collections to a concatenated string
 def:
 collectionToString(set : Collection(OclAny)) : String =
 set->iterate(obj : OclAny; result : String = '' |
@@ -886,13 +944,13 @@ set->iterate(obj : OclAny; result : String = '' |
 )
 
 -- OCL can't difference between Tuple(different content Types)
+-- that is why some collections are manually translated
 def:
 fillsCollectionToString(set : Collection(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type))) : String =
 set->iterate(fills : Tuple(ct:CompartmentType, rt:AbstractRole, t:Type); result : String = '' |
 	result + '[' + fills.t.name + ' -> ' + flattenSetToString(atoms(fills.rt)) + ' in ' + fills.ct.name +  ']\n'
 )
 
--- OCL can't difference between Tuple(different content Types)
 def:
 cardCollectionToString(set : Collection(Tuple(rst:Relationship, ct:CompartmentType))) : String =
 set->iterate(card : Tuple(rst:Relationship, ct:CompartmentType); result : String = '' |
@@ -918,6 +976,20 @@ set->iterate(obj : OclAny; string : String = '' |
 )
 
 def:
+roleConstraintsCollectionToString(set : Collection(OclAny)) : String =
+set->iterate(constraint : Tuple(rt1 : AbstractRole, constraint : String, rt2 : AbstractRole); result : String = '' |
+	result + flattenSetToString(atoms(constraint.rt1)) + ' <=> ' + flattenSetToString(atoms(constraint.rt2)) + '\n'
+)
+
+
+def:
+containsCollectionToString(set: Collection(Tuple(ct1:CompartmentType, ct2:CompartmentType))) : String =
+set->iterate(contains : Tuple(ct1:CompartmentType, ct2:CompartmentType); result : String = '' |
+	result  + contains.ct2.name + ' in ' + contains.ct1.name + '\n'
+)
+
+-- Prettifies an Object
+def:
 prettify(obj : OclAny) : String = 
 -- CompartmentType
 if obj.oclIsKindOf(CompartmentType) then obj.oclAsType(CompartmentType).name
@@ -937,11 +1009,6 @@ elseif obj.oclIsKindOf(Part) then
 elseif obj.oclIsKindOf(RoleConstraint) then
 	let constraint : RoleConstraint = obj.oclAsType(RoleConstraint)
 	in flattenSetToString(atoms(constraint.first)) + ' <=> ' + flattenSetToString(atoms(constraint.second))
--- Fullfillment
---elseif obj.oclIsKindOf(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) then 
---	let fills : Tuple(ct:CompartmentType, rt:AbstractRole, t:Type) = obj.oclAsType(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) 
---	in '[' + fills.t.name + ' -> ' + flattenSetToString(atoms(fills.rt)) + ' in ' + fills.ct.name +  ']'
-
 -- Rel values
 elseif obj.oclIsKindOf(Tuple(rt1:RoleType, rt2:RoleType)) then 
 	let rel_values : Tuple(rt1:RoleType, rt2:RoleType) = obj.oclAsType(Tuple(rt1:RoleType, rt2:RoleType))

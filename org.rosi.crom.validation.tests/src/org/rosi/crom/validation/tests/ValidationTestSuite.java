@@ -36,10 +36,11 @@ import org.rosi.crom.validation.validator.CROMValidator;
  * Parameterized test to run all test cases inside "testcases" directory
  *
  * @author Johannes Tandler
+ * @author Florian Amberg Edited to support the evaluation of CROM files via OCL
  *
  */
 @RunWith(Parameterized.class)
-public class OCLValidationTestSuite {
+public class ValidationTestSuite {
     /**
      * Object that creates the generated test cases
      */
@@ -124,12 +125,12 @@ public class OCLValidationTestSuite {
      * @param _bla     JUnit needs this, but we dont use it.
      * @throws Exception
      */
-    public OCLValidationTestSuite(TestCase testCase, String _bla) throws Exception {
+    public ValidationTestSuite(TestCase testCase, String _bla) throws Exception {
         this.testCase = testCase;
     }
 
     /**
-     * test method
+     * Test a model for validation errors
      *
      * @throws IOException
      * @throws Exception

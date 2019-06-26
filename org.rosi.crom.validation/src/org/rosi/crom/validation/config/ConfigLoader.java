@@ -16,48 +16,15 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IPath;
 
+/**
+ * @author Flo
+ *
+ */
 public class ConfigLoader {
-	//Features:
-	//-----------------------
-	//RML_Feature_Model
-	//Role_Types
-	//Role_Structure
-	//Role_Properties
-	//Role_Behavior
-	//Role_Inheritance
-	//Playable
-	//Players
-	//Naturals
-	//Roles
-	//Compartments
-	//Dates
-	//Dependent
-	//On_Compartments
-	//On_Relationships
-	//Role_Constraints
-	//Role_Implication
-	//Role_Prohibition
-	//Role_Equivalence
-	//Group_Constraints
-	//Occurrence_Constraints
-	//Relationships
-	//Relationship_Constraints
-	//Relationship_Cardinality
-	//Intra_Relationship_Constraints
-	//Parthood_Constraints
-	//Inter_Relationship_Constraints
-	//Compartment_Types
-	//Compartment_Structure
-	//Compartment_Properties
-	//Compartment_Behavior
-	//Compartment_Inheritance
-	//Participants
-	//Contains_Compartments
-	//Playable_by_Defining_Compartment
-	//Data_Types
-	//Data_Type_Inheritance
-	//-----------------------
 	
+	/** Load the standard configuration
+	 * @return
+	 */
 	public static List<String> loadStandardConfig(){
 		List<String> standardConfig = new ArrayList<String>();
 		try {
@@ -86,6 +53,9 @@ public class ConfigLoader {
 	
 	private List<String> customConfigList, standardConfigList;
 	
+	/**
+	 * @param cromPath
+	 */
 	public ConfigLoader(IPath cromPath) {
 		this.customConfigList = new ArrayList<>();
 		this.standardConfigList = loadStandardConfig();
@@ -94,6 +64,9 @@ public class ConfigLoader {
 	
 
 
+	/** Load a .crom_cfg file
+	 * @param cromPath
+	 */
 	private void loadCustomConfig(IPath cromPath) {
 		IPath configPath = cromPath.removeFileExtension().addFileExtension("crom_cfg");
 		IFile configFile = ResourcesPlugin.getWorkspace().getRoot().getFile(configPath);
@@ -115,6 +88,9 @@ public class ConfigLoader {
 		}
 	}
 	
+	/** Get the configurations
+	 * @return
+	 */
 	public List<String> getConfigList(){
 		// if the custom config failed to load, we use the standard config
 		if(customConfigList.size() == 0)
@@ -123,6 +99,9 @@ public class ConfigLoader {
 		return customConfigList;
 	}
 
+	/** For debugging purposes
+	 * 
+	 */
 	public void printConfig() {
 		String config = getConfigList().
 				stream().
