@@ -87,12 +87,11 @@ feature Compartment_Inheritance
 feature not(Compartment_Inheritance)
 	invariant CompartmentInheritanceNotAllowed
 	
-feature Contains_Compartments
-	invariant CompartmentContainsCompartmentDistinct
-	
 feature not(Contains_Compartments)
 	invariant CompartmentContainsCompartmentNotAllowed
-	
+
+feature not(Playable_by_Defining_Compartment)
+	invariant PlayableByDefiningCompartmentNotAllowed
 	
 //DataType
 feature not(Data_Type_Inheritance)

@@ -6,6 +6,12 @@
   </elements>
   <elements xsi:type="crom_l1_composed:DataType" name="dataParent" incoming="//@relations.1"/>
   <elements xsi:type="crom_l1_composed:DataType" name="dataChild" outgoing="//@relations.1"/>
+  <elements xsi:type="crom_l1_composed:CompartmentType" name="playingCompartment">
+    <parts>
+      <role xsi:type="crom_l1_composed:RoleType" name="playedRoleType"/>
+    </parts>
+  </elements>
   <relations xsi:type="crom_l1_composed:CompartmentInheritance" super="//@elements.0" sub="//@elements.1"/>
   <relations xsi:type="crom_l1_composed:DataInheritance" super="//@elements.2" sub="//@elements.3"/>
+  <relations xsi:type="crom_l1_composed:Fulfillment" filled="//@elements.4/@parts.0/@role" filler="//@elements.4"/>
 </crom_l1_composed:Model>

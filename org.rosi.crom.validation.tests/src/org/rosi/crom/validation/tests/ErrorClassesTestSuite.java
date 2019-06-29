@@ -136,28 +136,28 @@ public class ErrorClassesTestSuite
 	   assertThat(failedConstraints.containsKey("RoleBehaviorNotAllowed"), is(true));
 	   
 	   String errorRoleBehaviorNotAllowed = failedConstraints.get("RoleBehaviorNotAllowed");
-	   assertThat(errorRoleBehaviorNotAllowed, containsString("RoleTypes can not define operations. Failed for RoleType(s):"));
+	   assertThat(errorRoleBehaviorNotAllowed, containsString("RoleTypes cannot define operations. Failed for RoleType(s):"));
 	   assertThat(errorRoleBehaviorNotAllowed, containsString("roleType"));
 	   
 	   //RolePropertiesNotAllowed
 	   assertThat(failedConstraints.containsKey("RolePropertiesNotAllowed"), is(true));
 	   
 	   String errorRolePropertiesNotAllowed = failedConstraints.get("RolePropertiesNotAllowed");
-	   assertThat(errorRolePropertiesNotAllowed, containsString("RoleTypes can not define attributes. Failed for RoleType(s):"));
+	   assertThat(errorRolePropertiesNotAllowed, containsString("RoleTypes cannot define attributes. Failed for RoleType(s):"));
 	   assertThat(errorRolePropertiesNotAllowed, containsString("roleType"));
 	   
 	   //CompartmentBehaviorNotAllowed
 	   assertThat(failedConstraints.containsKey("CompartmentBehaviorNotAllowed"), is(true));
 	   
 	   String errorCompartmentBehaviorNotAllowed = failedConstraints.get("CompartmentBehaviorNotAllowed");
-	   assertThat(errorCompartmentBehaviorNotAllowed, containsString("CompartmentTypes can not define operations. Failed for CompartmentType(s):"));
+	   assertThat(errorCompartmentBehaviorNotAllowed, containsString("CompartmentTypes cannot define operations. Failed for CompartmentType(s):"));
 	   assertThat(errorCompartmentBehaviorNotAllowed, containsString("compartmentType"));
 	   
 	   //CompartmentPropertiesNotAllowed
 	   assertThat(failedConstraints.containsKey("CompartmentPropertiesNotAllowed"), is(true));
 	   
 	   String errorCompartmentPropertiesNotAllowed = failedConstraints.get("CompartmentPropertiesNotAllowed");
-	   assertThat(errorCompartmentPropertiesNotAllowed, containsString("CompartmentTypes can not define attributes. Failed for CompartmentType(s):"));
+	   assertThat(errorCompartmentPropertiesNotAllowed, containsString("CompartmentTypes cannot define attributes. Failed for CompartmentType(s):"));
 	   assertThat(errorCompartmentPropertiesNotAllowed, containsString("compartmentType"));
 	   
    }
@@ -219,21 +219,21 @@ public class ErrorClassesTestSuite
 	   assertThat(failedConstraints.containsKey("RolePlayableByRoleNotAllowed"), is(true));
 	   
 	   String errorRolePlayableByRoleNotAllowed = failedConstraints.get("RolePlayableByRoleNotAllowed");
-	   assertThat(errorRolePlayableByRoleNotAllowed, containsString("RoleTypes can not play roles. Failed for Fulfillment(s):"));
+	   assertThat(errorRolePlayableByRoleNotAllowed, containsString("RoleTypes cannot play roles. Failed for Fulfillment(s):"));
 	   assertThat(errorRolePlayableByRoleNotAllowed, containsString("[roleType -> roleType1 in compartmentType2]"));
 
 	   //RolePlayableByCompartmentNotAllowed
 	   assertThat(failedConstraints.containsKey("RolePlayableByCompartmentNotAllowed"), is(true));
 	   
 	   String errorRolePlayableByCompartmentNotAllowed = failedConstraints.get("RolePlayableByCompartmentNotAllowed");
-	   assertThat(errorRolePlayableByCompartmentNotAllowed, containsString("CompartmentTypes can not play roles. Failed for Fulfillment(s):"));
+	   assertThat(errorRolePlayableByCompartmentNotAllowed, containsString("CompartmentTypes cannot play roles. Failed for Fulfillment(s):"));
 	   assertThat(errorRolePlayableByCompartmentNotAllowed, containsString("[compartmentPlayer -> roleType in compartmentType]"));
 
 	   //RolePlayableByCompartmentNotAllowed
 	   assertThat(failedConstraints.containsKey("RolePlayableByDataNotAllowed"), is(true));
 	   
 	   String errorRolePlayableByDataNotAllowed = failedConstraints.get("RolePlayableByDataNotAllowed");
-	   assertThat(errorRolePlayableByDataNotAllowed, containsString("DataTypes can not play roles. Failed for Fulfillment(s):"));
+	   assertThat(errorRolePlayableByDataNotAllowed, containsString("DataTypes cannot play roles. Failed for Fulfillment(s):"));
 	   assertThat(errorRolePlayableByDataNotAllowed, containsString("[dataPlayer -> roleType in compartmentType]"));
    }
    
@@ -320,7 +320,7 @@ public class ErrorClassesTestSuite
 	   assertThat(failedConstraints.containsKey("InterRelationshipsAreDistinct"), is(true));
 	   
 	   String errorInterRelationshipsAreDistinct = failedConstraints.get("InterRelationshipsAreDistinct");
-	   assertThat(errorInterRelationshipsAreDistinct, containsString("The Relationships of an InterRelationshipConstraint can not be the same. Failed for InterRelationshipConstraint(s):"));
+	   assertThat(errorInterRelationshipsAreDistinct, containsString("The Relationships of an InterRelationshipConstraint cannot be the same. Failed for InterRelationshipConstraint(s):"));
 	   assertThat(errorInterRelationshipsAreDistinct, containsString("(rst<->rst) in compartmentType"));
 			   
 	   //InterRelationshipInSameCompartment
@@ -421,6 +421,7 @@ public class ErrorClassesTestSuite
 	   ConfigBuilder configBuilder = new ConfigBuilder();
 	   configBuilder.removeCompartmentInheritance()
 	   				.removeContainsCompartment()
+	   				.removePlayableByDefiningCompartment()
 	   				.removeDataInheritance();
 	   
 	   Map<String, String> failedConstraints = cromValidator.validate(cromResource, configBuilder.build());
@@ -438,8 +439,15 @@ public class ErrorClassesTestSuite
 	   assertThat(failedConstraints.containsKey("CompartmentContainsCompartmentNotAllowed"), is(true));
 	   
 	   String errorCompartmentContainsCompartmentNotAllowed = failedConstraints.get("CompartmentContainsCompartmentNotAllowed");
-	   assertThat(errorCompartmentContainsCompartmentNotAllowed, containsString("Compartments can not contain other Compartments. Failed for CompartmentType(s):"));
+	   assertThat(errorCompartmentContainsCompartmentNotAllowed, containsString("Compartments cannot contain other Compartments. Failed for CompartmentType(s):"));
 	   assertThat(errorCompartmentContainsCompartmentNotAllowed, containsString("compartmentChild"));
+			   
+	   //PlayableByDefiningCompartmentNotAllowed
+	   assertThat(failedConstraints.containsKey("PlayableByDefiningCompartmentNotAllowed"), is(true));
+	   
+	   String errorPlayableByDefiningCompartmentNotAllowed = failedConstraints.get("PlayableByDefiningCompartmentNotAllowed");
+	   assertThat(errorPlayableByDefiningCompartmentNotAllowed, containsString("Defining Compartments cannot play inner RoleTypes. Failed for Fulfillment(s): "));
+	   assertThat(errorPlayableByDefiningCompartmentNotAllowed, containsString("[playingCompartment -> playedRoleType in playingCompartment]"));
 			   
 	   //DataTypeInheritanceNotAllowed
 	   assertThat(failedConstraints.containsKey("DataTypeInheritanceNotAllowed"), is(true));

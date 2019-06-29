@@ -379,7 +379,7 @@ self.rt->select(rt | not rt.attributes->isEmpty())
 in
 customError(
 	failedRoleTypes->isEmpty(),
-	'RoleTypes can not define attributes. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
+	'RoleTypes cannot define attributes. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
 -- Check that no Role methods exist
@@ -389,7 +389,7 @@ self.rt->select(rt | not rt.operations->isEmpty())
 in
 customError(
 	failedRoleTypes->isEmpty(),
-	'RoleTypes can not define operations. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
+	'RoleTypes cannot define operations. Failed for RoleType(s): ' + collectionToString(failedRoleTypes)
 )
 
 -- Check that a Role is defined in exactly one Compartment
@@ -422,7 +422,7 @@ self.fills->select(fills | fills.t.oclIsKindOf(RoleType))
 in
 customError(
 	failedFulfillments->isEmpty(),
-	'RoleTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
+	'RoleTypes cannot play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 
 -- Check that Compartment players do not exist
@@ -432,7 +432,7 @@ self.fills->select(fills | fills.t.oclIsKindOf(CompartmentType))
 in
 customError(
 	failedFulfillments->isEmpty(),
-	'CompartmentTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
+	'CompartmentTypes cannot play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 	
 -- Check that Data players do not exist
@@ -442,7 +442,7 @@ self.fills->select(fills | fills.t.oclIsKindOf(DataType))
 in
 customError(
 	failedFulfillments->isEmpty(),
-	'DataTypes can not play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
+	'DataTypes cannot play roles. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments) 
 )
 	
 -- RoleConstraints
@@ -563,7 +563,7 @@ self.inter.keys()->select(
 in
 customError(
 	failedInterRels->isEmpty(),
-	'The Relationships of an InterRelationshipConstraint can not be the same. Failed for InterRelationshipConstraint(s):\n' 
+	'The Relationships of an InterRelationshipConstraint cannot be the same. Failed for InterRelationshipConstraint(s):\n' 
 	+ interCollectionToString(failedInterRels)
 )
 
@@ -598,7 +598,7 @@ self.ct->select(ct | not ct.attributes->isEmpty())
 in
 customError(
 	failedCompartmentTypes->isEmpty(),
-	'CompartmentTypes can not define attributes. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
+	'CompartmentTypes cannot define attributes. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
 -- Check that Compartment methods do not exist
@@ -608,7 +608,7 @@ self.ct->select(ct | not ct.operations->isEmpty())
 in
 customError(
 	failedCompartmentTypes->isEmpty(),
-	'CompartmentTypes can not define operations. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
+	'CompartmentTypes cannot define operations. Failed for CompartmentType(s): ' + collectionToString(failedCompartmentTypes)
 )
 
 -- Check that Sub-Compartments contain the Roles of the Super-Compartment
@@ -658,25 +658,37 @@ in customError(
 )
 
 -- Restrict the sub players when inheriting
+--\\forall (ct_1,ct_2) \\in \\preceq_{CT} \\forall rt \\in \\text{parts}(ct_2)
+--\\forall (s,ct_1,rt) \\in \\text{fills} \\exists (t,ct_2,rt) \\in \\text{fills} : s \\preceq_{T} t
+-- return all(
+--            any((s, t) in crom.preceq_t() for t, ct, rt_t in crom.fills if ct == ct_2 and rt_t == rt) \          
+--           for ct_1, ct_2 in crom.preceq_ct() 
+--			 for rt in crom.parts(ct_2) 
+ --          for s, ct_s, rt_s in crom.fills if rt_s == rt and ct_s == ct_1)
 inv RestrictSubPlayers:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 self.preceq_ct->select(
 	preceq_ct | not preceq_ct.super.parts->forAll(
 		part_rt | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.sub)->forAll(
 			fulfillment_sub | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.super)->exists(
-				fulfillment_super | self.preceq_nt->includes(
-					NaturalInheritance{
-						super=fulfillment_super.t,
-						sub=fulfillment_sub.t
-						}					
-				)
+				fulfillment_super | 
+				if fulfillment_super.t.oclIsKindOf(NaturalType) and fulfillment_sub.t.oclIsKindOf(NaturalType) then
+					self.preceq_nt->includes(
+						NaturalInheritance{
+							super=fulfillment_super.t.oclAsType(NaturalType),
+							sub=fulfillment_sub.t.oclAsType(NaturalType)
+							}					
+					) 
+				else false endif
 				or
-				self.preceq_ct->includes(
-					CompartmentInheritance{
-						super=fulfillment_super.t,
-						sub=fulfillment_sub.t
-						}
-				)	
+				if fulfillment_super.t.oclIsKindOf(CompartmentType) and fulfillment_sub.t.oclIsKindOf(CompartmentType) then
+					self.preceq_ct->includes(
+						CompartmentInheritance{
+							super=fulfillment_super.t.oclAsType(CompartmentType),
+							sub=fulfillment_sub.t.oclAsType(CompartmentType)
+							}
+					)	
+				else false endif
 			)
 		)
 	)
@@ -694,23 +706,26 @@ customError(
 	'CompartmentInheritance is not allowed. Failed for: ' + collectionToString(self.prec_ct)
 )
 
--- Check that Inner-Compartments are distinct to the Container-Compartment
-inv CompartmentContainsCompartmentDistinct:
-let failedContains : Set(Tuple(ct1:CompartmentType, ct2:CompartmentType)) =
-self.contains->select(contains | 
-	contains.ct1.name = contains.ct2.name
-)
-in
-customError(
-	failedContains->isEmpty(),
-	'Inner Compartments must be distinct from the container Compartment. Failed for CompartmentType(s): ' + containsCollectionToString(failedContains)
-)
 
 -- Check that Inner-Compartments do not exist
 inv CompartmentContainsCompartmentNotAllowed:
 customError(
 	self.contains->isEmpty(),
-	'Compartments can not contain other Compartments. Failed for CompartmentType(s): ' + containsCollectionToString(self.contains)
+	'Compartments cannot contain other Compartments. Failed for CompartmentType(s): ' + containsCollectionToString(self.contains)
+)
+
+
+-- Check that that nothing is played by the defining Compartments
+inv PlayableByDefiningCompartmentNotAllowed:
+let failedFulfillments : Set(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type)) = 
+self.fills->select(fills | 
+	fills.t.oclIsKindOf(CompartmentType)
+	and fills.t = fills.ct
+)
+in
+customError(
+	failedFulfillments->isEmpty(),
+	'Defining Compartments cannot play inner RoleTypes. Failed for Fulfillment(s): ' + fillsCollectionToString(failedFulfillments)
 )
 
 
@@ -939,7 +954,7 @@ endif
 -- converts Collections to a concatenated string
 def:
 collectionToString(set : Collection(OclAny)) : String =
-set->iterate(obj : OclAny; result : String = '' |
+'\n' + set->iterate(obj : OclAny; result : String = '' |
 	result + prettify(obj) + '\n'
 )
 
@@ -947,25 +962,25 @@ set->iterate(obj : OclAny; result : String = '' |
 -- that is why some collections are manually translated
 def:
 fillsCollectionToString(set : Collection(Tuple(ct:CompartmentType, rt:AbstractRole, t:Type))) : String =
-set->iterate(fills : Tuple(ct:CompartmentType, rt:AbstractRole, t:Type); result : String = '' |
+'\n' + set->iterate(fills : Tuple(ct:CompartmentType, rt:AbstractRole, t:Type); result : String = '' |
 	result + '[' + fills.t.name + ' -> ' + flattenSetToString(atoms(fills.rt)) + ' in ' + fills.ct.name +  ']\n'
 )
 
 def:
 cardCollectionToString(set : Collection(Tuple(rst:Relationship, ct:CompartmentType))) : String =
-set->iterate(card : Tuple(rst:Relationship, ct:CompartmentType); result : String = '' |
+'\n' + set->iterate(card : Tuple(rst:Relationship, ct:CompartmentType); result : String = '' |
 	result + card.rst.name + ' in ' + card.ct.name + '\n'
 )
 
 def:
 interCollectionToString(set : Collection(Tuple(ct:CompartmentType, first:Relationship, second:Relationship))) : String =
-set->iterate(inter : Tuple(ct:CompartmentType, first:Relationship, second:Relationship); result : String = '' |
+'\n' + set->iterate(inter : Tuple(ct:CompartmentType, first:Relationship, second:Relationship); result : String = '' |
 	result + '(' + inter.first.name + '<->' + inter.second.name + ') in ' + inter.ct.name + '\n'
 )
 
 def:
 intraCollectionToString(set: Collection(Tuple(c:String, ct:CompartmentType, rst:Relationship))) : String =
-set->iterate(intra : Tuple(c:String, ct:CompartmentType, rst:Relationship); result : String = '' |
+'\n' + set->iterate(intra : Tuple(c:String, ct:CompartmentType, rst:Relationship); result : String = '' |
 	result  + intra.rst.name + ' in ' + intra.ct.name + '\n'
 )
 
@@ -977,14 +992,14 @@ set->iterate(obj : OclAny; string : String = '' |
 
 def:
 roleConstraintsCollectionToString(set : Collection(OclAny)) : String =
-set->iterate(constraint : Tuple(rt1 : AbstractRole, constraint : String, rt2 : AbstractRole); result : String = '' |
+'\n' + set->iterate(constraint : Tuple(rt1 : AbstractRole, constraint : String, rt2 : AbstractRole); result : String = '' |
 	result + flattenSetToString(atoms(constraint.rt1)) + ' <=> ' + flattenSetToString(atoms(constraint.rt2)) + '\n'
 )
 
 
 def:
 containsCollectionToString(set: Collection(Tuple(ct1:CompartmentType, ct2:CompartmentType))) : String =
-set->iterate(contains : Tuple(ct1:CompartmentType, ct2:CompartmentType); result : String = '' |
+'\n' + set->iterate(contains : Tuple(ct1:CompartmentType, ct2:CompartmentType); result : String = '' |
 	result  + contains.ct2.name + ' in ' + contains.ct1.name + '\n'
 )
 

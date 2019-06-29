@@ -37,6 +37,11 @@ public class ConfigBuilder {
 	     return this;
 	   }
 	   
+	   public ConfigBuilder removePlayableByDefiningCompartment() {
+		   config.remove("Playable_by_Defining_Compartment");
+		   return this;
+	   }
+	   
 	   public ConfigBuilder removeRoleInheritance() {
 		   config.remove("Role_Inheritance");
 	     return this;

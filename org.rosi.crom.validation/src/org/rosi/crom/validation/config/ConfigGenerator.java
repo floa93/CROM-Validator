@@ -62,7 +62,7 @@ public class ConfigGenerator {
 	}
 	
 	/** 
-	 * @param askOverride 
+	 * @param askOverride flag if the user should be asked to replace the current .cfg file
 	 */
 	public void generate(boolean askOverride) {
 		try {
