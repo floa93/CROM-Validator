@@ -71,9 +71,9 @@ public class ErrorClassesTestSuite
 	   assertThat(errorCompartmentContainsFilledRoles, containsString("CompartmentContainsFilledRoles"));
 	   
 	   //RoleFilled
-	   assertThat(failedConstraints.containsKey("RoleFilled"), is(true));
+	   assertThat(failedConstraints.containsKey("RolesAreFilled"), is(true));
 	   
-	   String errorRoleFilled = failedConstraints.get("RoleFilled");
+	   String errorRoleFilled = failedConstraints.get("RolesAreFilled");
 	   assertThat(errorRoleFilled, containsString("Every RoleType must be filled. Failed for RoleType(s):"));
 	   assertThat(errorRoleFilled, containsString("roleTypeA"));
 	   
@@ -406,6 +406,15 @@ public class ErrorClassesTestSuite
 	   String errorSubCompartmentRelationshipsEqualsBaseCompartmentRelationships = failedConstraints.get("SubCompartmentRelationshipsEqualsBaseCompartmentRelationships");
 	   assertThat(errorSubCompartmentRelationshipsEqualsBaseCompartmentRelationships, containsString("The Relationships of Sub Compartments need to equal to the Relationships of Base Compartments. Failed for Compartment Inheritance(s):"));
 	   assertThat(errorSubCompartmentRelationshipsEqualsBaseCompartmentRelationships, containsString("compartmentParent <- compartmentChild"));
+	 
+	   //SubCompartmentRelationshipsEqualsBaseCompartmentRelationships
+	   assertThat(failedConstraints.containsKey("RestrictSubCompartmentPlayers"), is(true));
+	   
+	   String errorRestrictSubCompartmentPlayers = failedConstraints.get("RestrictSubCompartmentPlayers");
+	   assertThat(errorRestrictSubCompartmentPlayers, containsString("A Sub Compartment cannot introduce new players, it can only limit or subtype existing players. Invalid players in the following CompartmentsInheritances found:"));
+	   assertThat(errorRestrictSubCompartmentPlayers, containsString("ctParent <- ctChild"));
+	   assertThat(errorRestrictSubCompartmentPlayers, containsString("ctParent1 <- ctChild1"));
+	   
    }
    
    /**

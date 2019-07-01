@@ -327,7 +327,7 @@ customError(
 )
 
 -- Is every Role filled?
-inv RoleFilled:
+inv RolesAreFilled:
 let failedRoleTypes : Set(RoleType) = 
 self.rt->select(
 			rt | not self.fills->exists(
@@ -663,7 +663,7 @@ in customError(
 -- this is the most complex invariant, since we need to check
 -- multiple inner sets and constraints
 
-inv RestrictSubPlayers:
+inv RestrictSubCompartmentPlayers:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
 -- select the transitive closure of all ct inheritances
 self.preceq_ct->select(

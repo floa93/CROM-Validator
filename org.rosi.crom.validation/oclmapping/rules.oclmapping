@@ -5,7 +5,7 @@ feature true
 	invariant RelationshipDefinedInCompartment	
 	invariant RelationshipRolesAreDistinct	
 	invariant RelationshipRolesInSameCompartment
-	invariant RoleFilled
+	invariant RolesAreFilled
 	invariant ConstraintDefinedInCompartment	
 	invariant ConstraintRolesInSameCompartment
 	
@@ -82,7 +82,7 @@ feature Compartment_Inheritance
 	invariant SubCompartmentContainsRoleTypesOfBaseCompartment
 	invariant SubCompartmentContainsRelationshipsOfBaseCompartment
 	invariant SubCompartmentRelationshipsEqualsBaseCompartmentRelationships
-	invariant RestrictSubPlayers
+	invariant RestrictSubCompartmentPlayers
 
 feature not(Compartment_Inheritance)
 	invariant CompartmentInheritanceNotAllowed
