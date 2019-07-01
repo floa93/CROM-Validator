@@ -236,7 +236,6 @@ def:
 prec_rt : Set(RoleInheritance) =
 RoleInheritance.allInstances()
 
-
 def: 
 prec_dt : Set(DataInheritance) =
 DataInheritance.allInstances()
@@ -249,10 +248,13 @@ def:
 preceq_nt : Set(NaturalInheritance) =
 transitiveClosureNatural(self.prec_nt)->union(reflexiveClosureNatural(self.nt))
 
-
 def:
 trans_rt : Set(RoleInheritance) =
 transitiveClosureRole(self.prec_rt)
+
+def: 
+preceq_dt : Set(DataInheritance) =
+transitiveClosureData(self.prec_dt)->union(reflexiveClosureData(self.dt))
 
 
 -- ###CONSTRAINTS###
@@ -658,46 +660,71 @@ in customError(
 )
 
 -- Restrict the sub players when inheriting
---\\forall (ct_1,ct_2) \\in \\preceq_{CT} \\forall rt \\in \\text{parts}(ct_2)
---\\forall (s,ct_1,rt) \\in \\text{fills} \\exists (t,ct_2,rt) \\in \\text{fills} : s \\preceq_{T} t
--- return all(
---            any((s, t) in crom.preceq_t() for t, ct, rt_t in crom.fills if ct == ct_2 and rt_t == rt) \          
---           for ct_1, ct_2 in crom.preceq_ct() 
---			 for rt in crom.parts(ct_2) 
- --          for s, ct_s, rt_s in crom.fills if rt_s == rt and ct_s == ct_1)
+-- this is the most complex invariant, since we need to check
+-- multiple inner sets and constraints
+
 inv RestrictSubPlayers:
 let failedCompartmentInheritances : Set(CompartmentInheritance) =
+-- select the transitive closure of all ct inheritances
 self.preceq_ct->select(
-	preceq_ct | not preceq_ct.super.parts->forAll(
-		part_rt | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.sub)->forAll(
-			fulfillment_sub | self.fills->select(fulfillment | fulfillment.rt = part_rt.role and fulfillment.ct = preceq_ct.super)->exists(
-				fulfillment_super | 
-				if fulfillment_super.t.oclIsKindOf(NaturalType) and fulfillment_sub.t.oclIsKindOf(NaturalType) then
-					self.preceq_nt->includes(
-						NaturalInheritance{
-							super=fulfillment_super.t.oclAsType(NaturalType),
-							sub=fulfillment_sub.t.oclAsType(NaturalType)
-							}					
-					) 
-				else false endif
-				or
-				if fulfillment_super.t.oclIsKindOf(CompartmentType) and fulfillment_sub.t.oclIsKindOf(CompartmentType) then
-					self.preceq_ct->includes(
-						CompartmentInheritance{
-							super=fulfillment_super.t.oclAsType(CompartmentType),
-							sub=fulfillment_sub.t.oclAsType(CompartmentType)
-							}
-					)	
-				else false endif
+	-- query all role types of super
+	preceq_ct | 
+		if preceq_ct.sub = preceq_ct.super then false
+		else
+			not preceq_ct.super.parts->forAll(
+			--  get all fulfillments happening in ct_sub
+			part_rt | let fulfillments_sub = self.fills->select(fulfillment | fulfillment.ct = preceq_ct.sub) in
+			-- if there are no fulfillments dont bother
+			if fulfillments_sub->isEmpty() then true
+			else
+				fulfillments_sub->forAll(
+				--  get all fulfillments happening in ct_super and every related "parent" compartment
+					fulfillment_sub | let fulfillments_super = getAllTransitiveFulfillmentsForCompartmentSub(preceq_ct.sub) in 
+					fulfillments_super->exists(
+						fulfillment_super | atoms(fulfillment_sub.rt) = atoms(fulfillment_super.rt)	
+						and 
+						-- check not only the filler type of super, but also every related "parent" of the filler
+						(fulfillment_sub.t = fulfillment_super.t	
+						or
+						-- if fulfillment_t is a NaturalType
+						if fulfillment_super.t.oclIsTypeOf(NaturalType) then
+							let filler_nt = fulfillment_super.t.oclAsType(NaturalType) in
+							getAllRelatedNaturalTypes(filler_nt)->forAll(nt_i |
+								fulfillment_sub.t = nt_i.super
+							)
+						-- if fulfillment_t is a NaturalType
+						elseif fulfillment_super.t.oclIsTypeOf(CompartmentType) then
+							let filler_ct = fulfillment_super.t.oclAsType(CompartmentType) in
+							getAllRelatedCompartmentTypes(filler_ct)->forAll(ct_i |
+								fulfillment_sub.t = ct_i.super
+							)
+						-- if fulfillment_t is a NaturalType
+						elseif fulfillment_super.t.oclIsTypeOf(DataType) then
+							let filler_dt = fulfillment_super.t.oclAsType(DataType) in
+							getAllRelatedDataTypes(filler_dt)->forAll(dt_i |
+								fulfillment_sub.t = dt_i.super
+							)
+						-- if fulfillment_t is a RoleType
+						elseif fulfillment_super.t.oclIsTypeOf(RoleType) then
+							let filler_rt = fulfillment_super.t.oclAsType(RoleType) in
+							getAllRelatedRoleTypes(filler_rt)->forAll(rt_i |
+								fulfillment_sub.t = rt_i.super
+							)
+						else false
+						endif	
+						)
+					)
+				)
+			endif
 			)
-		)
-	)
+		endif
 )
 in customError(
 	failedCompartmentInheritances->isEmpty(),
-	'Invalid Players for : ' 
+	'A Sub Compartment cannot introduce new players, it can only limit or subtype existing players. Invalid players in the following CompartmentsInheritances found: ' 
 	+ collectionToString(failedCompartmentInheritances)
 )
+
 
 -- Check that Compartment inheritances do not exist
 inv CompartmentInheritanceNotAllowed:
@@ -748,127 +775,7 @@ customError(
 
 
 -- ###UTIL###
--- Util methods to calculate the transitive and reflexive closures
-
--- calculates transitive closure recursivly for RoleInheritance
-def:
-transitiveClosureRole(closure : Set(RoleInheritance)):
-Set(RoleInheritance) = 
-let new_relations : Set(RoleInheritance) = newRelationsRole(closure),
-closure_until_now : Set(RoleInheritance) = closure->union(new_relations)
-in
-if closure_until_now = closure
-then closure
-else newRelationsRole(closure_until_now)
-endif
-
-def: 
-newRelationsRole(closure : Set(RoleInheritance)):  
-Set(RoleInheritance) = 
-closure->iterate(x_y:RoleInheritance;new_relations:Set(RoleInheritance) = Set{} |
-	closure->iterate(q_w:RoleInheritance;tmp:Set(RoleInheritance) = Set{} |
-		if x_y.sub = q_w.super then
-		new_relations->includingAll(
-			tmp->including(
-				RoleInheritance{
-					super=x_y.super,
-					sub=q_w.sub
-				}	
-			)
-		)
-		else new_relations->includingAll(tmp)
-		endif
-	)
-)
-
--- calculates transitive closure recursivly for CompartmentInheritance
-def:
-transitiveClosureCompartment(closure : Set(CompartmentInheritance)):
-Set(CompartmentInheritance) = 
-let new_relations : Set(CompartmentInheritance) = newRelationsCompartment(closure),
-closure_until_now : Set(CompartmentInheritance) = closure->union(new_relations)
-in
-if closure_until_now = closure
-then closure
-else transitiveClosureCompartment(closure_until_now)
-endif
-
-def: 
-newRelationsCompartment(closure : Set(CompartmentInheritance)):  
-Set(CompartmentInheritance) = 
-closure->iterate(x_y:CompartmentInheritance;new_relations:Set(CompartmentInheritance) = Set{} |
-	closure->iterate(q_w:CompartmentInheritance;tmp:Set(CompartmentInheritance) = Set{} |
-		if x_y.sub = q_w.super then
-		new_relations->includingAll(
-			tmp->including(
-				CompartmentInheritance{
-					super=x_y.super,
-					sub=q_w.sub
-				}	
-			)
-		)
-		else new_relations->includingAll(tmp)
-		endif
-	)
-)
-
-def:
-reflexiveClosureCompartment(closure : Set(CompartmentType)): 
-Set(CompartmentInheritance) = 
-closure->iterate(element : CompartmentType;tuple : Set(CompartmentInheritance) = Set{} |
-	tuple->including(
-		CompartmentInheritance{
-			super=element,
-			sub=element
-		}
-	)
-)
-
-
--- calculates transitive closure recursivly for NaturalInheritance
-def:
-transitiveClosureNatural(closure : Set(NaturalInheritance)):
-Set(NaturalInheritance) = 
-let new_relations : Set(NaturalInheritance) = newRelationsNatural(closure),
-closure_until_now : Set(NaturalInheritance) = closure->union(new_relations)
-in
-if closure_until_now = closure
-then closure
-else transitiveClosureNatural(closure_until_now)
-endif
-
-def: 
-newRelationsNatural(closure : Set(NaturalInheritance)):  
-Set(NaturalInheritance) = 
-closure->iterate(x_y:NaturalInheritance;new_relations:Set(NaturalInheritance) = Set{} |
-	closure->iterate(q_w:NaturalInheritance;tmp:Set(NaturalInheritance) = Set{} |
-		if x_y.sub = q_w.super then
-		new_relations->includingAll(
-			tmp->including(
-				NaturalInheritance{
-					super=x_y.super,
-					sub=q_w.sub
-				}	
-			)
-		)
-		else new_relations->includingAll(tmp)
-		endif
-	)
-)
-
-def:
-reflexiveClosureNatural(closure : Set(NaturalType)): 
-Set(NaturalInheritance) = 
-closure->iterate(element : NaturalType;tuple : Set(NaturalInheritance) = Set{} |
-	tuple->including(
-		NaturalInheritance{
-			super=element,
-			sub=element
-		}
-	)
-)
-
--- Other Helper Methods
+-- Helper Methods
 
 -- creates a rich invariant, specified in https://wiki.eclipse.org/OCL/New_and_Noteworthy/Luna
 def: 
@@ -1047,6 +954,202 @@ elseif obj.oclIsKindOf(DataInheritance) then
 -- Others
 else obj.toString()
 endif
+
+-- Util methods to calculate the transitive and reflexive closures
+
+-- calculates transitive closure recursivly for RoleInheritance
+def:
+transitiveClosureRole(closure : Set(RoleInheritance)):
+Set(RoleInheritance) = 
+let new_relations : Set(RoleInheritance) = newRelationsRole(closure),
+closure_until_now : Set(RoleInheritance) = closure->union(new_relations)
+in
+if closure_until_now = closure
+then closure
+else newRelationsRole(closure_until_now)
+endif
+
+def: 
+newRelationsRole(closure : Set(RoleInheritance)):  
+Set(RoleInheritance) = 
+closure->iterate(x_y:RoleInheritance;new_relations:Set(RoleInheritance) = Set{} |
+	closure->iterate(q_w:RoleInheritance;tmp:Set(RoleInheritance) = Set{} |
+		if x_y.sub = q_w.super then
+		new_relations->includingAll(
+			tmp->including(
+				RoleInheritance{
+					super=x_y.super,
+					sub=q_w.sub
+				}	
+			)
+		)
+		else new_relations->includingAll(tmp)
+		endif
+	)
+)
+
+-- calculates transitive closure recursivly for CompartmentInheritance
+def:
+transitiveClosureCompartment(closure : Set(CompartmentInheritance)):
+Set(CompartmentInheritance) = 
+let new_relations : Set(CompartmentInheritance) = newRelationsCompartment(closure),
+closure_until_now : Set(CompartmentInheritance) = closure->union(new_relations)
+in
+if closure_until_now = closure
+then closure
+else transitiveClosureCompartment(closure_until_now)
+endif
+
+def: 
+newRelationsCompartment(closure : Set(CompartmentInheritance)):  
+Set(CompartmentInheritance) = 
+closure->iterate(x_y:CompartmentInheritance;new_relations:Set(CompartmentInheritance) = Set{} |
+	closure->iterate(q_w:CompartmentInheritance;tmp:Set(CompartmentInheritance) = Set{} |
+		if x_y.sub = q_w.super then
+		new_relations->includingAll(
+			tmp->including(
+				CompartmentInheritance{
+					super=x_y.super,
+					sub=q_w.sub
+				}	
+			)
+		)
+		else new_relations->includingAll(tmp)
+		endif
+	)
+)
+
+def:
+reflexiveClosureCompartment(closure : Set(CompartmentType)): 
+Set(CompartmentInheritance) = 
+closure->iterate(element : CompartmentType;tuple : Set(CompartmentInheritance) = Set{} |
+	tuple->including(
+		CompartmentInheritance{
+			super=element,
+			sub=element
+		}
+	)
+)
+
+
+-- calculates transitive closure recursivly for NaturalInheritance
+def:
+transitiveClosureNatural(closure : Set(NaturalInheritance)):
+Set(NaturalInheritance) = 
+let new_relations : Set(NaturalInheritance) = newRelationsNatural(closure),
+closure_until_now : Set(NaturalInheritance) = closure->union(new_relations)
+in
+if closure_until_now = closure
+then closure
+else transitiveClosureNatural(closure_until_now)
+endif
+
+def: 
+newRelationsNatural(closure : Set(NaturalInheritance)):  
+Set(NaturalInheritance) = 
+closure->iterate(x_y:NaturalInheritance;new_relations:Set(NaturalInheritance) = Set{} |
+	closure->iterate(q_w:NaturalInheritance;tmp:Set(NaturalInheritance) = Set{} |
+		if x_y.sub = q_w.super then
+		new_relations->includingAll(
+			tmp->including(
+				NaturalInheritance{
+					super=x_y.super,
+					sub=q_w.sub
+				}	
+			)
+		)
+		else new_relations->includingAll(tmp)
+		endif
+	)
+)
+
+def:
+reflexiveClosureNatural(closure : Set(NaturalType)): 
+Set(NaturalInheritance) = 
+closure->iterate(element : NaturalType;tuple : Set(NaturalInheritance) = Set{} |
+	tuple->including(
+		NaturalInheritance{
+			super=element,
+			sub=element
+		}
+	)
+)
+
+
+-- calculates transitive closure recursivly for DataInheritance
+def:
+transitiveClosureData(closure : Set(DataInheritance)):
+Set(DataInheritance) = 
+let new_relations : Set(DataInheritance) = newRelationsData(closure),
+closure_until_now : Set(DataInheritance) = closure->union(new_relations)
+in
+if closure_until_now = closure
+then closure
+else transitiveClosureData(closure_until_now)
+endif
+
+def: 
+newRelationsData(closure : Set(DataInheritance)):  
+Set(DataInheritance) = 
+closure->iterate(x_y:DataInheritance;new_relations:Set(DataInheritance) = Set{} |
+	closure->iterate(q_w:DataInheritance;tmp:Set(DataInheritance) = Set{} |
+		if x_y.sub = q_w.super then
+		new_relations->includingAll(
+			tmp->including(
+				DataInheritance{
+					super=x_y.super,
+					sub=q_w.sub
+				}	
+			)
+		)
+		else new_relations->includingAll(tmp)
+		endif
+	)
+)
+
+def:
+reflexiveClosureData(closure : Set(DataType)): 
+Set(DataInheritance) = 
+closure->iterate(element : DataType;tuple : Set(DataInheritance) = Set{} |
+	tuple->including(
+		DataInheritance{
+			super=element,
+			sub=element
+		}
+	)
+)
+
+-- helper methods for the invariant RestrictSubPlayers
+-- related = transitively connected
+
+-- returns all fulfillments of related compartments
+def: getAllTransitiveFulfillmentsForCompartmentSub(ct_sub : CompartmentType) : 
+Set(Tuple(ct : CompartmentType, rt : AbstractRole, t : Type)) = 
+self.fills->select(
+	fills | getAllRelatedCompartmentTypes(ct_sub)->exists(
+		relatedCT | fills.ct = relatedCT.super
+	)
+)
+
+-- returns all related natural types
+def: getAllRelatedNaturalTypes(nt : NaturalType) : 
+Set(NaturalInheritance) = 
+self.preceq_nt->select(preceq_nt |  preceq_nt.sub = nt and preceq_nt.super <> preceq_nt.sub)
+
+-- returns all related compartment types
+def: getAllRelatedCompartmentTypes(ct : CompartmentType) : 
+Set(CompartmentInheritance) = 
+self.preceq_ct->select(preceq_ct |  preceq_ct.sub = ct and preceq_ct.super <> preceq_ct.sub)
+
+-- returns all related data types
+def: getAllRelatedDataTypes(dt : DataType) : 
+Set(DataInheritance) = 
+self.preceq_dt->select(preceq_dt |  preceq_dt.sub = dt and preceq_dt.super <> preceq_dt.sub)
+
+-- returns all related role types
+def: getAllRelatedRoleTypes(rt : RoleType) : 
+Set(RoleInheritance) = 
+self.trans_rt->select(preceq_rt |  preceq_rt.sub = rt and preceq_rt.super <> preceq_rt.sub)
 
 
 endpackage
