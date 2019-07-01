@@ -89,7 +89,7 @@ public class CROMValidator{
 
 		//Load Configuration
 		ConfigLoader configLoader = new ConfigLoader(path);
-		configLoader.printConfig();
+		//Debug: configLoader.printConfig();
 		
 		//Feature Mapping
 		URL featureMappingURL = getClass().getResource("/oclmapping/rules.oclmapping");
@@ -144,17 +144,20 @@ public class CROMValidator{
 		Set<String> invariants = featureMapping.getInvariants();
 	
 		for(String constraintName : invariants) {
+			// evaluates the constraint and saves the state inside oclParser
+			// the result here is just for debugging/ logging purposes
 			Object result = oclParser.evaluate(constraintName);
 			if(result != null) {
 				if(result instanceof CollectionValue) {
-					CollectionValue setValue = (CollectionValue)result;
-					printf("%s: [%s]%s", constraintName, setValue.size().toString(), setValue.getElements().toString());
+					//Debug: CollectionValue setValue = (CollectionValue)result;
+					//Debug: printf("%s: [%s]%s", constraintName, setValue.size().toString(), setValue.getElements().toString());
 				}
-				else
-					printf("%s: %s", constraintName, result);
+				else {
+					//Debug: printf("%s: %s", constraintName, result);
+				}
 			}
 			else {
-				printf("COULD NOT FIND CONSTRAINT %s in OCL", constraintName);
+				//Debug: printf("COULD NOT FIND CONSTRAINT %s in OCL", constraintName);
 			}
 		}
 	}
@@ -173,7 +176,7 @@ public class CROMValidator{
 			printf("Please fix the following errors:");
 			
 			for(String errorMessage : failedConstraints.values()) {
-				printf(errorMessage);
+				//Debug: printf(errorMessage);
 				Log.warning(errorMessage);
 			}
 			
